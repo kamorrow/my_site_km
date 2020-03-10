@@ -15,7 +15,7 @@ authors: []
 lastmod: '2020-02-01T15:53:48-08:00'
 featured: no
 image:
-  caption: 'Snowshoe hare (Lepus americanus), winter coat, D. Gordon & E. Robertson'
+  caption: 'D. Gordon & E. Robertson'
   focal_point: ''
   preview_only: no
 projects: []
@@ -159,7 +159,7 @@ adults_summary <- merge(adults_summary_sex, adults_summary_all)
 
 # Display mean weight data frame as table
 kable(adults_count) %>% 
-  kable_styling(bootstrap_options = "striped", 
+  kable_styling(bootstrap_options = "hover", 
                 full_width = F,
                 position = "center"
                 ) %>% 
