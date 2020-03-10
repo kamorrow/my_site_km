@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Climate | Keene Morrow</title>
+    <link>/tags/climate/</link>
+      <atom:link href="/tags/climate/index.xml" rel="self" type="application/rss+xml" />
+    <description>Climate</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Sun, 01 Mar 2020 15:53:48 -0800</lastBuildDate>
+    <image>
+      <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
+      <title>Climate</title>
+      <link>/tags/climate/</link>
+    </image>
+    
+    <item>
+      <title>Australia&#39;s Climate</title>
+      <link>/project/australia-fires/</link>
+      <pubDate>Sun, 01 Mar 2020 15:53:48 -0800</pubDate>
+      <guid>/project/australia-fires/</guid>
+      <description>
+
+
+&lt;p&gt;At the end of 2019 and beginning of 2020, Australia experienced devastating bushfires. More than 11 million hectares burned, principally in the southeast provinces of New South Wales and Victoria. Only thirty-three people lost their lives, but more than a billion animals are estimated to have been killed, including on Kangaroo Island, a haven for biological diversity.&lt;/p&gt;
+&lt;p&gt;The current government of Australia shies away from connecting the intensity of the bushfires to climate change or acknowledging the intense impacts of climate change on the country. CLimate scientists, on the othe rhand, agree that the extremely high temperatures and severe drought that fueled the bushfires are undoubtably linked to climate change. (BBC)&lt;/p&gt;
+&lt;p&gt;In light of the devastation of these fires, the R For Data Science #tidytuesday prompt for 01-07-2020 included data on the fires and the climate of Australia. Here, temperature and rainfall data are used to construct climatology graphs for five Australian cities: Brisbane, Canberra, Melbourne, Perth, and Sydney.&lt;/p&gt;
+&lt;div id=&#34;set-up&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Set Up&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)
+library(lubridate)
+library(here)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;read-data&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Read Data&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;rainfall &amp;lt;- readr::read_csv(&amp;#39;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv&amp;#39;)
+
+temperature &amp;lt;- readr::read_csv(&amp;#39;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv&amp;#39;)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;wrangling&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Wrangling&lt;/h3&gt;
+&lt;div id=&#34;rainfall&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Rainfall&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;rain_date &amp;lt;- rainfall %&amp;gt;%
+  mutate(date_new = lubridate::ymd(paste(year, month, day, sep = &amp;quot;-&amp;quot;))) %&amp;gt;% # concatenate dates and make them Date type
+  mutate(month = as.numeric(month)) %&amp;gt;% # prep months for applying names
+  mutate(month_name = month.abb[month]) %&amp;gt;%  # apply names to months
+  mutate(month_name = fct_relevel(month_name, levels = month.abb)) # relevel to get month names in order&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;temperature&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Temperature&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;temp &amp;lt;- temperature %&amp;gt;%
+  mutate(city_name = str_to_title(city_name)) %&amp;gt;% #clean up city names (BRISBANE to Brisbane)
+  mutate(month = lubridate::month(date)) %&amp;gt;% # pull month from date
+  mutate(month_name = month.abb[month]) %&amp;gt;%  # apply names to months
+  mutate(month_name = fct_relevel(month_name, levels = month.abb)) %&amp;gt;%  # relevel month names
+  mutate(year = lubridate::year(date))&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&#34;prep-data-for-constructing-climatologies&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Prep Data for Constructing Climatologies&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;temp_summary &amp;lt;-  temp %&amp;gt;%
+  drop_na() %&amp;gt;% # this probably isn&amp;#39;t a good idea, but let&amp;#39;s assume that the loss of data is evenly distributed throughout the time range and doesn&amp;#39;t impact the mean monthly temperature
+  group_by(city_name, month_name, temp_type) %&amp;gt;%
+  summarize(mean_temp = mean(temperature)) %&amp;gt;%
+  pivot_wider(names_from = temp_type, values_from = mean_temp, names_prefix = &amp;quot;mean_temp_&amp;quot;)
+
+rain_summary &amp;lt;- rain_date %&amp;gt;%
+  mutate(rain_0 = ifelse(is.na(rainfall), 0, rainfall)) %&amp;gt;% # another questionable assumption
+  group_by(city_name, month_name) %&amp;gt;%
+  summarize(mean_rainfall = mean(rain_0))
+
+climate_mean &amp;lt;- merge(temp_summary, rain_summary)
+
+cities &amp;lt;- unique(climate_mean$city_name) # gets list of the common cities from the merge&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;plotting-climatologies&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Plotting Climatologies&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Plot one climatology per city with both temperature and rainfall data (missing some sloppily removed before)
+
+for(i in seq_along(cities)){
+  # plot data for each city common between the temperature and rainfall data
+  ggplot(data = subset(climate_mean, climate_mean$city_name == cities[i])) +
+    # blue columns for rainfall
+    geom_col(aes(x = month_name,
+                 y = mean_rainfall*4), # adjustment to make the scales work together
+             color = &amp;quot;navy&amp;quot;, fill = &amp;quot;blue&amp;quot;, alpha = &amp;quot;0.6&amp;quot;) +
+    # red ribbon for area between mean max temp and mean min temp
+    geom_ribbon(aes(x = month_name,
+                    ymax = mean_temp_max,
+                    ymin = mean_temp_min, group = 1),
+                fill = &amp;quot;red&amp;quot;,
+                alpha = 0.3) +
+    # red line and points for mean temeprature as mean of mean max and min temp
+    geom_line(aes(x = month_name,
+                  y = ((mean_temp_max + mean_temp_min)/2),
+                  group = 1),
+              color = &amp;quot;red&amp;quot;,
+              size = 1) +
+    geom_point(aes(x = month_name,
+                   y = ((mean_temp_max + mean_temp_min)/2)),
+               color = &amp;quot;red&amp;quot;) +
+    # scale wrangling
+    scale_y_continuous(limits = c(-2, 35), # keeps scales consistent across plots
+                       sec.axis = sec_axis(~./4, name = &amp;quot;Rainfall (mm)&amp;quot;)) + # adds second axis for rainfall, adjusted to counteract the scale factor above
+    scale_colour_manual(values = c(&amp;quot;blue&amp;quot;, &amp;quot;red&amp;quot;)) +
+    labs(y = &amp;quot;Temperature (°C)&amp;quot;,
+         x = &amp;quot;&amp;quot;,
+         title = &amp;quot;Monthly Mean Temperature Range &amp;amp; Mean Rainfall&amp;quot;,
+         # subtitle of plot based on city in question
+         subtitle = paste(cities[i],&amp;quot;, Australia&amp;quot;, sep = &amp;quot;&amp;quot;),
+         caption = paste(&amp;quot;Mean monthly temperature shown as red points and line with the range between the mean\nmaximum and mean minimum temperatures shaded in red; blue columns show mean\nmonthly rainfall for &amp;quot;, cities[i], &amp;quot;, Australia.\n\nData: Australian Bureau of Meterology\n#tidytuesday 2020-01-07\nKeene Morrow&amp;quot;,
+                         sep = &amp;quot;&amp;quot;)) + 
+    theme_minimal() +
+    theme(plot.caption = element_text(hjust = 0, face = &amp;quot;italic&amp;quot;))
+  
+  ggsave(here::here(&amp;quot;figures&amp;quot;, paste(cities[i], &amp;quot;_climate.png&amp;quot;, sep = &amp;quot;&amp;quot;)),
+         height = 7, width = 7)
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;figures/Brisbane_climate.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;figures/Canberra_climate.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;figures/Melbourne_climate.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;figures/Perth_climate.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;figures/Sydney_climate.png&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;summary&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Summary&lt;/h3&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;Wrangled dates with &lt;code&gt;lubridate&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Made some questionable assumptions about NA’s in the data.&lt;/li&gt;
+&lt;li&gt;Used &lt;code&gt;for&lt;/code&gt; loop to generate five plots of climatologies, one for each of the cities with data for both temperature and rainfall.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr /&gt;
+&lt;/div&gt;
+&lt;div id=&#34;references&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;References&lt;/h3&gt;
+&lt;p&gt;“Australia Fires.” #tidytuesday, R for Data Science. &lt;a href=&#34;https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-01-07&#34; class=&#34;uri&#34;&gt;https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-01-07&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;“Australia fires: A visual guide to the bushfire crisis.” British Broadcasting Company. 01-31-2020. &lt;a href=&#34;https://www.bbc.com/news/world-australia-50951043&#34; class=&#34;uri&#34;&gt;https://www.bbc.com/news/world-australia-50951043&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;“Climate Data Online.” Australian Bureau of Meterology. &lt;a href=&#34;http://www.bom.gov.au/climate/data/&#34; class=&#34;uri&#34;&gt;http://www.bom.gov.au/climate/data/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Ghosh, Pallab. “Climate change boosted Australia bushfire risk by at least 30%.” British Broadcasting Company, 03-04-2020. &lt;a href=&#34;https://www.bbc.com/news/science-environment-51742646&#34; class=&#34;uri&#34;&gt;https://www.bbc.com/news/science-environment-51742646&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Gill, Victoria. “Australia fires were far worse than any prediction.” British Broadcasting Company. 02-24-2020. &lt;a href=&#34;https://www.bbc.com/news/science-environment-51590080?intlink_from_url=https://www.bbc.com/news/topics/c2wlvy54gd1t/australia-fires&amp;amp;link_location=live-reporting-story&#34; class=&#34;uri&#34;&gt;https://www.bbc.com/news/science-environment-51590080?intlink_from_url=https://www.bbc.com/news/topics/c2wlvy54gd1t/australia-fires&amp;amp;link_location=live-reporting-story&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

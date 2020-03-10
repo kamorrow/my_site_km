@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>PCA | Keene Morrow</title>
+    <link>/tags/pca/</link>
+      <atom:link href="/tags/pca/index.xml" rel="self" type="application/rss+xml" />
+    <description>PCA</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Sun, 01 Mar 2020 15:53:48 -0800</lastBuildDate>
+    <image>
+      <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
+      <title>PCA</title>
+      <link>/tags/pca/</link>
+    </image>
+    
+    <item>
+      <title>Fruits &amp; Vegetables</title>
+      <link>/project/nutrient-analysis/</link>
+      <pubDate>Sun, 01 Mar 2020 15:53:48 -0800</pubDate>
+      <guid>/project/nutrient-analysis/</guid>
+      <description>
+
+
+&lt;p&gt;Consuming fruits and vegetables is linked to health benefits, due to their density of nutrients. Principal components analysis was performed on USDA data containing nutrient information about whole, raw fruits and vegetables.
+The data groups fruits and vegetables by their common culinary uses in the United States, rather than their botanic classifications. As such, botanic fruits such as tomatoes, squashes, and peppers are analyzed here as vegetables.&lt;/p&gt;
+&lt;div id=&#34;overview-of-principal-components-analysis&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Overview of Principal Components Analysis&lt;/h4&gt;
+&lt;p&gt;Principal components analysis (PCA) is a method of reducing numerous dimensions of data to fewer dimensions to give a clearer sense of the data. These new dimensions are the principal components. The first principal component accounts for the most possible variance found in the data, followed by the second and so on. PCA can be visualized with a biplot, which show variables as vectors who length indicate the variance of that variable along the new dimension of the principal component. The direction of these vectors relative to each other indicate correlation, with vectors in similar directions being more positively correlated and those in opposite directions more negatively correlated. Vectors at right angles are not correlated to each other. Biplots may also show outlier observations as points. (Horst 2020)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;principal-components-analysis-of-vegetables&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Principal Components Analysis of Vegetables&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;food &amp;lt;- read_csv(here::here(&amp;quot;data&amp;quot;, &amp;quot;usda_nutrients.csv&amp;quot;)) %&amp;gt;% # read in nutrient data
+  clean_names() # format variable names
+
+# create subset of just raw vegetables, no juices
+veg_sub&amp;lt;- food %&amp;gt;%
+  filter(food_group == &amp;quot;Vegetables and Vegetable Products&amp;quot;) %&amp;gt;%
+  filter(str_detect(descrip, pattern = &amp;quot;raw&amp;quot;),
+         str_detect(descrip, pattern = &amp;quot;juice&amp;quot;, negate = TRUE)) %&amp;gt;% 
+  select(8:30) # remove non-numeric (1:7) and recommended dietary allowance variables (31:45, duplicate 13:30)
+
+# Principal Component Analysis of Vegetable Nutrients
+veg_pca &amp;lt;- prcomp(veg_sub, scale = TRUE)
+
+# PCA Summary
+summary(veg_pca)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Importance of components:
+##                           PC1    PC2     PC3     PC4     PC5    PC6     PC7
+## Standard deviation     2.4337 1.6370 1.49852 1.33295 1.19472 1.0670 1.04249
+## Proportion of Variance 0.2575 0.1165 0.09763 0.07725 0.06206 0.0495 0.04725
+## Cumulative Proportion  0.2575 0.3740 0.47165 0.54890 0.61096 0.6605 0.70772
+##                            PC8     PC9   PC10   PC11    PC12    PC13    PC14
+## Standard deviation     0.92806 0.90630 0.8334 0.8053 0.78424 0.73597 0.68947
+## Proportion of Variance 0.03745 0.03571 0.0302 0.0282 0.02674 0.02355 0.02067
+## Cumulative Proportion  0.74516 0.78088 0.8111 0.8393 0.86601 0.88956 0.91023
+##                           PC15    PC16    PC17    PC18    PC19    PC20    PC21
+## Standard deviation     0.66394 0.63829 0.54033 0.48548 0.46292 0.42699 0.39664
+## Proportion of Variance 0.01917 0.01771 0.01269 0.01025 0.00932 0.00793 0.00684
+## Cumulative Proportion  0.92940 0.94711 0.95980 0.97005 0.97937 0.98730 0.99414
+##                           PC22    PC23
+## Standard deviation     0.36236 0.05990
+## Proportion of Variance 0.00571 0.00016
+## Cumulative Proportion  0.99984 1.00000&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Vegetable PCA Visualization
+veg_biplot &amp;lt;- autoplot(veg_pca,
+                      colour = NA,
+                      loadings.label = TRUE,
+                      loadings.label.size = 3,
+                      loadings.label.colour = &amp;quot;black&amp;quot;,
+                      loadings.label.repel = TRUE) +
+  scale_y_continuous(limits = c(-0.4, 0.5)) +
+  scale_x_continuous(limits = c(-0.05, 0.4)) +
+  theme_minimal() +
+    labs(title = &amp;quot;Vegetables&amp;quot;,
+       caption = &amp;quot;Figure 1.\nBiplot of principal component analysis of nutrients in whole, raw vegetables. Parenthetical values on axes indicate the\npercent of variance captured by that principal component.\nData: USDA&amp;quot;) +
+  theme(plot.caption = element_text(hjust = 0, face = &amp;quot;italic&amp;quot;))
+
+# Display visualization
+veg_biplot&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/project/nutrient-analysis/index_files/figure-html/unnamed-chunk-1-1.png&#34; width=&#34;672&#34; /&gt;
+The first and second principal components account for a total of &lt;code&gt;r&lt;/code&gt;% of variance in the nutrient content of vegetables analyzed.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;em&gt;Vitamin A&lt;/em&gt;, &lt;em&gt;vitamin C&lt;/em&gt; and &lt;em&gt;vitamin E&lt;/em&gt; content are negatively correlated to &lt;em&gt;vitamin B12&lt;/em&gt; and &lt;em&gt;selenium&lt;/em&gt; content.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Vitamin A&lt;/em&gt; content may be negatively correlated to &lt;em&gt;sugar&lt;/em&gt; content.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Vitamin A&lt;/em&gt; content is not correlated to &lt;em&gt;niacin&lt;/em&gt; content.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Vitamin B12&lt;/em&gt;, &lt;em&gt;vitamin C&lt;/em&gt;, &lt;em&gt;vitamin E&lt;/em&gt;, and &lt;em&gt;selenium&lt;/em&gt; content are not correlated to seventeen other variables considered.&lt;/li&gt;
+&lt;li&gt;Those seventeen other variables are not negatively correlated to each other and some, such as &lt;em&gt;copper&lt;/em&gt;, &lt;em&gt;phosphorus&lt;/em&gt;, and &lt;em&gt;kilocalorie&lt;/em&gt; content are highly correlated.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div id=&#34;principal-components-analysis-of-fruits&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Principal Components Analysis of Fruits&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# create subset of just raw fruits, no juices
+fruit_sub&amp;lt;- food %&amp;gt;%
+  filter(food_group == &amp;quot;Fruits and Fruit Juices&amp;quot;) %&amp;gt;%
+  filter(str_detect(descrip, pattern = &amp;quot;raw&amp;quot;),
+         str_detect(descrip, pattern = &amp;quot;juice&amp;quot;, negate = TRUE)) %&amp;gt;% 
+  select(8:30) %&amp;gt;%
+  select(- vit_b12_mcg)
+
+# Principal Component Analysis of Fruit Nutrients
+fruit_pca &amp;lt;- prcomp(fruit_sub, scale = TRUE)
+
+# PCA Summary
+summary(fruit_pca)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Importance of components:
+##                           PC1    PC2     PC3     PC4     PC5     PC6    PC7
+## Standard deviation     2.5178 1.6490 1.31492 1.26970 1.15165 1.05769 1.0456
+## Proportion of Variance 0.2881 0.1236 0.07859 0.07328 0.06029 0.05085 0.0497
+## Cumulative Proportion  0.2881 0.4117 0.49033 0.56361 0.62390 0.67475 0.7244
+##                            PC8     PC9    PC10    PC11    PC12    PC13    PC14
+## Standard deviation     0.96091 0.88710 0.81296 0.77827 0.77042 0.72526 0.65188
+## Proportion of Variance 0.04197 0.03577 0.03004 0.02753 0.02698 0.02391 0.01932
+## Cumulative Proportion  0.76641 0.80219 0.83223 0.85976 0.88674 0.91065 0.92996
+##                           PC15   PC16    PC17   PC18    PC19   PC20    PC21
+## Standard deviation     0.60865 0.5914 0.51553 0.4300 0.37727 0.3478 0.32213
+## Proportion of Variance 0.01684 0.0159 0.01208 0.0084 0.00647 0.0055 0.00472
+## Cumulative Proportion  0.94680 0.9627 0.97478 0.9832 0.98965 0.9951 0.99987
+##                           PC22
+## Standard deviation     0.05380
+## Proportion of Variance 0.00013
+## Cumulative Proportion  1.00000&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Fruit PCA Visualization
+fruit_biplot &amp;lt;- autoplot(fruit_pca,
+                      colour = NA,
+                      loadings.label = TRUE,
+                      loadings.label.size = 3,
+                      loadings.label.colour = &amp;quot;black&amp;quot;,
+                      loadings.label.repel = TRUE) +
+  scale_y_continuous(limits = c(-0.4, 0.5)) +
+  scale_x_continuous(limits = c(-0.05, 0.4)) +
+  theme_minimal() +
+  labs(title = &amp;quot;Fruits&amp;quot;,
+       caption = &amp;quot;Figure 2.\nBiplot of principal component analysis of nutrients in whole, raw fruit. Parenthetical values on axes indicate the\npercent of variance captured by that principal component.\nData: USDA&amp;quot;) +
+  theme(plot.caption = element_text(hjust = 0, face = &amp;quot;italic&amp;quot;))
+
+# Display visualization
+fruit_biplot&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/project/nutrient-analysis/index_files/figure-html/unnamed-chunk-2-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;em&gt;Phosphorus&lt;/em&gt; and &lt;em&gt;kilocalorie&lt;/em&gt; content are highlight positively correlated in fruits, as in vegetables.&lt;/li&gt;
+&lt;li&gt;Unlike in vegetables, &lt;em&gt;copper&lt;/em&gt; content is less correlated to &lt;em&gt;phophorus&lt;/em&gt; and &lt;em&gt;kilocalorie&lt;/em&gt; content in fruits, though there is still a positive correlation.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Vitamin C&lt;/em&gt; and &lt;em&gt;sugar&lt;/em&gt; content may be negatively correlated.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Zinc&lt;/em&gt;, &lt;em&gt;folate&lt;/em&gt;, &lt;em&gt;fat&lt;/em&gt;, and &lt;em&gt;vitamin E&lt;/em&gt; content are not correlated to &lt;em&gt;sugar&lt;/em&gt;, &lt;em&gt;calcium&lt;/em&gt;, &lt;em&gt;iron&lt;/em&gt;, and &lt;em&gt;carbohydrate&lt;/em&gt; concent.&lt;/li&gt;
+&lt;li&gt;Compared to vegetables, there is less overall correlation between nutrient content in fruits.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div id=&#34;references&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;References&lt;/h4&gt;
+&lt;p&gt;American Optometric Association. 2020. Can fruits, vegetables lower cataract risk? &lt;a href=&#34;https://www.aoa.org/news/clinical-eye-care/fruits-vegetables-cataracts&#34; class=&#34;uri&#34;&gt;https://www.aoa.org/news/clinical-eye-care/fruits-vegetables-cataracts&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Horst, A. 2020. Lecture 2: PCA continued, RDA intro. ESM 244, Bren School of Environmental Science and Management, University of California, Santa Barbara. &lt;a href=&#34;https://allisonhorst.github.io/&#34; class=&#34;uri&#34;&gt;https://allisonhorst.github.io/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;U.S. Department of Agriculture, Agricultural Research Service. 2019. National Nutrient Database. &lt;a href=&#34;https://fdc.nal.usda.gov/&#34; class=&#34;uri&#34;&gt;https://fdc.nal.usda.gov/&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,183 @@
+---
+title: "Snowshoe Hares"
+author: "Keene Morrow"
+date: "February 6th, 2020"
+slug: hare=analysis
+categories:
+  - R
+tags:
+  - R Markdown
+  - learning
+  - Ecology
+subtitle: ''
+summary: 'Population dynamics at Bonanza Creek, Alaska'
+authors: []
+lastmod: '2020-02-01T15:53:48-08:00'
+featured: no
+image:
+  caption: 'Snowshoe hare (Lepus americanus), winter coat, D. Gordon & E. Robertson'
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(janitor)
+library(kableExtra)
+library(here)
+library(lubridate)
+library(ggridges)
+library(patchwork)
+```
+
+
+
+*Lepus americanus*, the snowshoe hare, is a species of hare found in the northern areas of North America. (Murray & Smith 2008)  It is known for its change in coloration from brown in the summer to white in the winter and its long, snowshoe-like, hind feet. (Montana 2018)  The population of snowshoe hares at Bonanza Creek Experimental Forest in interior Alaska was monitored using capture-recapture methods from 1999 to 2012. (Kielland, Chapin, & Ruess 2017)
+
+![](figures/bonanza_map.jpg)
+
+*Study site at Bonanza Creek, Alaska, Bonanza LTER, UAF*
+
+#### Analysis & Results
+```{r}
+# Read in data
+bunnies <- read_csv(here::here("data", "showshoe_lter.csv")) # yes, yes rabbits != hares
+```
+
+
+```{r}
+# Prepare data
+adults_all <- bunnies %>%
+  mutate(date = lubridate::mdy(date)) %>% # dates to date class
+  mutate(sex = str_to_upper(sex), # impose order on strings
+         age = str_to_upper(age),
+         month = month(date, label = TRUE), # create month variable
+         year = year(date)) %>% # create year variable
+  filter(sex %in% c("M", "F")) %>% # remove observations without definitive sex recorded
+  drop_na(age, weight) %>% # remove observations without age or weight recorded
+  filter(str_detect(age, pattern = "A")) %>% # filter for adults only
+  mutate(age = "A") # wrangle age for consistency
+```
+
+
+```{r}
+# Create data frame of only adult females
+adults_f <- adults_all %>%
+  filter(sex == "F")
+
+# Create data frame of only adult males
+adults_m <- adults_all %>%
+  filter(sex == "M")
+```
+
+
+```{r}
+# Visualize weight distribution
+## Adult females versus all adults
+ggplot() +
+  # All adults
+  geom_density_ridges(data = adults_all,
+                      aes(x = weight, y = month),
+                      fill = "grey50",
+                      scale = 0.9) +
+  # Adult females only
+  geom_density_ridges(data = adults_f,
+                      aes(x = weight, y = month, fill = month),
+                      alpha = 0.8,
+                      show.legend = FALSE,
+                      scale = 0.9) +
+  scale_y_discrete(expand = expand_scale(mult = c(0.01, 0.15))) +
+  scale_x_continuous(limits = c(500, 2500)) +
+  labs(title = "Adult Snowshoe Hares",
+       subtitle = "Females",
+       x = "Mass (g)",
+       y = "") +
+## Adult males versus all adults
+ggplot() +
+  # All adults
+  geom_density_ridges(data = adults_all,
+                      aes(x = weight, y = month),
+                      fill = "grey50",
+                      scale = 0.9) +
+  # Adult males only
+  geom_density_ridges(data = adults_m,
+                      aes(x = weight, y = month, fill = month),
+                      alpha = 0.8,
+                      show.legend = FALSE,
+                      scale = 0.9) +
+  scale_y_discrete(expand = expand_scale(mult = c(0.01, 0.15))) +
+  scale_x_continuous(limits = c(500, 2500)) +
+  labs(subtitle = "Males",
+       x = "",
+       y = "") +
+plot_annotation(caption = "Density distributions of adult snowshoe hare mass (g) by month for hares by sex (color) compared to all hares (grey),\n1999 to 2012.  No male hares were observed in May and only one was observed in July. Distributions of female hares\nversus all hares deviate slightly in these months due to the density estimation methodology.\nData: Bonanza Creek LTER Site",
+                theme = theme(plot.caption = element_text(hjust = 0, face = "italic")))
+
+```
+
+```{r}
+# Create data frame of observation counts by month, females, males, and total
+adults_count <- adults_all %>%
+  group_by(month, sex) %>%
+  count(month) %>%
+  pivot_wider(names_from = sex, values_from = n) %>%
+  rename(Female = F,
+         Male = M,
+         Month = month) %>%
+  mutate(Male = ifelse(is.na(Male), 0, Male),
+         Total = Female + Male)
+
+# Display count data frame as table
+kable(adults_count) %>% 
+  kable_styling(bootstrap_options = "striped", 
+                full_width = F,
+                position = "center"
+                ) %>% 
+  add_header_above(c("Table 1. Adult Snowshoe Hare\nCounts by month, 1999 to 2012" = 4))
+```
+No observations were made between December and February in any year.  Variation in monthly observations is likely due to survey frequency and conditions on the ground rather than actual abundance.
+
+```{r}
+# Create data frame of mean weights by month, females and males
+adults_summary_sex <- adults_all %>%
+  group_by(month, sex) %>%
+  summarize(mean_weight = mean(weight)) %>%
+  pivot_wider(names_from = sex, values_from = mean_weight) %>%
+  rename(Female = F,
+         Male = M)
+
+# Create data frame of mean weights by month for all adults
+adults_summary_all <- adults_all %>%
+  group_by(month) %>%
+  summarize(All = mean(weight))
+
+# Combine data frames
+adults_summary <- merge(adults_summary_sex, adults_summary_all)
+
+# Display mean weight data frame as table
+kable(adults_count) %>% 
+  kable_styling(bootstrap_options = "striped", 
+                full_width = F,
+                position = "center"
+                ) %>% 
+  add_header_above(c("Table 2. Adult Snowshoe Hare\nMean weights by month, 1999 to 2012" = 4))
+```
+
+
+***
+#### References
+
+Bonanza Creek LTER. Institute of Arctic Biology, University of Alaska Fairbanks. http://www.lter.uaf.edu/
+
+Gordon, D. & E. Robertson. 2013. Snowshoe Hare (Lepus americanus), white morph, Shirleys Bay, Ottawa, Ontario, Canada. https://commons.wikimedia.org/wiki/File:Snowshoe_Hare,_Shirleys_Bay.jpg
+
+Kielland K., F. S. Chapin, R. W. Ruess. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present. Environmental Data Initiative. https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14.
+
+Montana. 2018. Snowshoe Hare - *Lepus americanus*. Montana Field Guide.  Montana Natural Heritage Program and Montana Fish, Wildlife and Parks. http://fieldguide.mt.gov/speciesDetail.aspx?elcode=AMAEB03010
+
+Murray, D. & Smith, A.T. 2008. *Lepus americanus* . The IUCN Red List of Threatened Species 2008: e.T41273A10411354. https://dx.doi.org/10.2305/IUCN.UK.2008.RLTS.T41273A10411354.en.
+
+National Park Service. 2004. Snowshoe Hare. http://www.nps.gov/noca/journey/images/for_car/hare_snowshoe.htm

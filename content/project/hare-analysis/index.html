@@ -1,0 +1,451 @@
+---
+title: "Snowshoe Hares"
+author: "Keene Morrow"
+date: "February 6th, 2020"
+slug: hare=analysis
+categories:
+  - R
+tags:
+  - R Markdown
+  - learning
+  - Ecology
+subtitle: ''
+summary: 'Population dynamics at Bonanza Creek, Alaska'
+authors: []
+lastmod: '2020-02-01T15:53:48-08:00'
+featured: no
+image:
+  caption: 'Snowshoe hare (Lepus americanus), winter coat, D. Gordon & E. Robertson'
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+
+
+<p><em>Lepus americanus</em>, the snowshoe hare, is a species of hare found in the northern areas of North America. (Murray &amp; Smith 2008) It is known for its change in coloration from brown in the summer to white in the winter and its long, snowshoe-like, hind feet. (Montana 2018) The population of snowshoe hares at Bonanza Creek Experimental Forest in interior Alaska was monitored using capture-recapture methods from 1999 to 2012. (Kielland, Chapin, &amp; Ruess 2017)</p>
+<p><img src="figures/bonanza_map.jpg" /></p>
+<p><em>Study site at Bonanza Creek, Alaska, Bonanza LTER, UAF</em></p>
+<div id="analysis-results" class="section level4">
+<h4>Analysis &amp; Results</h4>
+<pre class="r"><code># Read in data
+bunnies &lt;- read_csv(here::here(&quot;data&quot;, &quot;showshoe_lter.csv&quot;)) # yes, yes rabbits != hares</code></pre>
+<pre class="r"><code># Prepare data
+adults_all &lt;- bunnies %&gt;%
+  mutate(date = lubridate::mdy(date)) %&gt;% # dates to date class
+  mutate(sex = str_to_upper(sex), # impose order on strings
+         age = str_to_upper(age),
+         month = month(date, label = TRUE), # create month variable
+         year = year(date)) %&gt;% # create year variable
+  filter(sex %in% c(&quot;M&quot;, &quot;F&quot;)) %&gt;% # remove observations without definitive sex recorded
+  drop_na(age, weight) %&gt;% # remove observations without age or weight recorded
+  filter(str_detect(age, pattern = &quot;A&quot;)) %&gt;% # filter for adults only
+  mutate(age = &quot;A&quot;) # wrangle age for consistency</code></pre>
+<pre class="r"><code># Create data frame of only adult females
+adults_f &lt;- adults_all %&gt;%
+  filter(sex == &quot;F&quot;)
+
+# Create data frame of only adult males
+adults_m &lt;- adults_all %&gt;%
+  filter(sex == &quot;M&quot;)</code></pre>
+<pre class="r"><code># Visualize weight distribution
+## Adult females versus all adults
+ggplot() +
+  # All adults
+  geom_density_ridges(data = adults_all,
+                      aes(x = weight, y = month),
+                      fill = &quot;grey50&quot;,
+                      scale = 0.9) +
+  # Adult females only
+  geom_density_ridges(data = adults_f,
+                      aes(x = weight, y = month, fill = month),
+                      alpha = 0.8,
+                      show.legend = FALSE,
+                      scale = 0.9) +
+  scale_y_discrete(expand = expand_scale(mult = c(0.01, 0.15))) +
+  scale_x_continuous(limits = c(500, 2500)) +
+  labs(title = &quot;Adult Snowshoe Hares&quot;,
+       subtitle = &quot;Females&quot;,
+       x = &quot;Mass (g)&quot;,
+       y = &quot;&quot;) +
+## Adult males versus all adults
+ggplot() +
+  # All adults
+  geom_density_ridges(data = adults_all,
+                      aes(x = weight, y = month),
+                      fill = &quot;grey50&quot;,
+                      scale = 0.9) +
+  # Adult males only
+  geom_density_ridges(data = adults_m,
+                      aes(x = weight, y = month, fill = month),
+                      alpha = 0.8,
+                      show.legend = FALSE,
+                      scale = 0.9) +
+  scale_y_discrete(expand = expand_scale(mult = c(0.01, 0.15))) +
+  scale_x_continuous(limits = c(500, 2500)) +
+  labs(subtitle = &quot;Males&quot;,
+       x = &quot;&quot;,
+       y = &quot;&quot;) +
+plot_annotation(caption = &quot;Density distributions of adult snowshoe hare mass (g) by month for hares by sex (color) compared to all hares (grey),\n1999 to 2012.  No male hares were observed in May and only one was observed in July. Distributions of female hares\nversus all hares deviate slightly in these months due to the density estimation methodology.\nData: Bonanza Creek LTER Site&quot;,
+                theme = theme(plot.caption = element_text(hjust = 0, face = &quot;italic&quot;)))</code></pre>
+<p><img src="/project/hare-analysis/index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code># Create data frame of observation counts by month, females, males, and total
+adults_count &lt;- adults_all %&gt;%
+  group_by(month, sex) %&gt;%
+  count(month) %&gt;%
+  pivot_wider(names_from = sex, values_from = n) %&gt;%
+  rename(Female = F,
+         Male = M,
+         Month = month) %&gt;%
+  mutate(Male = ifelse(is.na(Male), 0, Male),
+         Total = Female + Male)
+
+# Display count data frame as table
+kable(adults_count) %&gt;% 
+  kable_styling(bootstrap_options = &quot;striped&quot;, 
+                full_width = F,
+                position = &quot;center&quot;
+                ) %&gt;% 
+  add_header_above(c(&quot;Table 1. Adult Snowshoe Hare\nCounts by month, 1999 to 2012&quot; = 4))</code></pre>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="4">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Table 1. Adult Snowshoe Hare<br>Counts by month, 1999 to 2012
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:left;">
+Month
+</th>
+<th style="text-align:right;">
+Female
+</th>
+<th style="text-align:right;">
+Male
+</th>
+<th style="text-align:right;">
+Total
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Mar
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+47
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Apr
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+26
+</td>
+<td style="text-align:right;">
+47
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+May
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+8
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Jun
+</td>
+<td style="text-align:right;">
+58
+</td>
+<td style="text-align:right;">
+46
+</td>
+<td style="text-align:right;">
+104
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Jul
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Aug
+</td>
+<td style="text-align:right;">
+165
+</td>
+<td style="text-align:right;">
+105
+</td>
+<td style="text-align:right;">
+270
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sep
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+45
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Oct
+</td>
+<td style="text-align:right;">
+27
+</td>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:right;">
+55
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Nov
+</td>
+<td style="text-align:right;">
+68
+</td>
+<td style="text-align:right;">
+43
+</td>
+<td style="text-align:right;">
+111
+</td>
+</tr>
+</tbody>
+</table>
+<p>No observations were made between December and February in any year. Variation in monthly observations is likely due to survey frequency and conditions on the ground rather than actual abundance.</p>
+<pre class="r"><code># Create data frame of mean weights by month, females and males
+adults_summary_sex &lt;- adults_all %&gt;%
+  group_by(month, sex) %&gt;%
+  summarize(mean_weight = mean(weight)) %&gt;%
+  pivot_wider(names_from = sex, values_from = mean_weight) %&gt;%
+  rename(Female = F,
+         Male = M)
+
+# Create data frame of mean weights by month for all adults
+adults_summary_all &lt;- adults_all %&gt;%
+  group_by(month) %&gt;%
+  summarize(All = mean(weight))
+
+# Combine data frames
+adults_summary &lt;- merge(adults_summary_sex, adults_summary_all)
+
+# Display mean weight data frame as table
+kable(adults_count) %&gt;% 
+  kable_styling(bootstrap_options = &quot;striped&quot;, 
+                full_width = F,
+                position = &quot;center&quot;
+                ) %&gt;% 
+  add_header_above(c(&quot;Table 2. Adult Snowshoe Hare\nMean weights by month, 1999 to 2012&quot; = 4))</code></pre>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="4">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Table 2. Adult Snowshoe Hare<br>Mean weights by month, 1999 to 2012
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:left;">
+Month
+</th>
+<th style="text-align:right;">
+Female
+</th>
+<th style="text-align:right;">
+Male
+</th>
+<th style="text-align:right;">
+Total
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Mar
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+47
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Apr
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+26
+</td>
+<td style="text-align:right;">
+47
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+May
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+8
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Jun
+</td>
+<td style="text-align:right;">
+58
+</td>
+<td style="text-align:right;">
+46
+</td>
+<td style="text-align:right;">
+104
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Jul
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Aug
+</td>
+<td style="text-align:right;">
+165
+</td>
+<td style="text-align:right;">
+105
+</td>
+<td style="text-align:right;">
+270
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sep
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+45
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Oct
+</td>
+<td style="text-align:right;">
+27
+</td>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:right;">
+55
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Nov
+</td>
+<td style="text-align:right;">
+68
+</td>
+<td style="text-align:right;">
+43
+</td>
+<td style="text-align:right;">
+111
+</td>
+</tr>
+</tbody>
+</table>
+<hr />
+</div>
+<div id="references" class="section level4">
+<h4>References</h4>
+<p>Bonanza Creek LTER. Institute of Arctic Biology, University of Alaska Fairbanks. <a href="http://www.lter.uaf.edu/" class="uri">http://www.lter.uaf.edu/</a></p>
+<p>Gordon, D. &amp; E. Robertson. 2013. Snowshoe Hare (Lepus americanus), white morph, Shirleys Bay, Ottawa, Ontario, Canada. <a href="https://commons.wikimedia.org/wiki/File:Snowshoe_Hare,_Shirleys_Bay.jpg" class="uri">https://commons.wikimedia.org/wiki/File:Snowshoe_Hare,_Shirleys_Bay.jpg</a></p>
+<p>Kielland K., F. S. Chapin, R. W. Ruess. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present. Environmental Data Initiative. <a href="https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14" class="uri">https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14</a>.</p>
+<p>Montana. 2018. Snowshoe Hare - <em>Lepus americanus</em>. Montana Field Guide. Montana Natural Heritage Program and Montana Fish, Wildlife and Parks. <a href="http://fieldguide.mt.gov/speciesDetail.aspx?elcode=AMAEB03010" class="uri">http://fieldguide.mt.gov/speciesDetail.aspx?elcode=AMAEB03010</a></p>
+<p>Murray, D. &amp; Smith, A.T. 2008. <em>Lepus americanus</em> . The IUCN Red List of Threatened Species 2008: e.T41273A10411354. <a href="https://dx.doi.org/10.2305/IUCN.UK.2008.RLTS.T41273A10411354.en" class="uri">https://dx.doi.org/10.2305/IUCN.UK.2008.RLTS.T41273A10411354.en</a>.</p>
+<p>National Park Service. 2004. Snowshoe Hare. <a href="http://www.nps.gov/noca/journey/images/for_car/hare_snowshoe.htm" class="uri">http://www.nps.gov/noca/journey/images/for_car/hare_snowshoe.htm</a></p>
+</div>

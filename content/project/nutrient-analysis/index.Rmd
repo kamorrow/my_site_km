@@ -1,0 +1,134 @@
+---
+title: "Fruits & Vegetables"
+author: "Keene Morrow"
+date: "February 6th, 2020"
+slug: nutrient-analysis
+categories:
+  - R
+tags:
+  - R Markdown
+  - PCA
+subtitle: ''
+summary: 'Principal components analysis of nutrient content'
+authors: []
+lastmod: '2020-03-01T15:53:48-08:00'
+featured: no
+image:
+  caption: 'AOA 2019'
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(janitor)
+library(naniar)
+library(VIM)
+library(skimr)
+library(ggfortify)
+library(here)
+```
+
+
+Consuming fruits and vegetables is linked to health benefits, due to their density of nutrients. Principal components analysis was performed on USDA data containing nutrient information about whole, raw fruits and vegetables.
+The data groups fruits and vegetables by their common culinary uses in the United States, rather than their botanic classifications.  As such, botanic fruits such as tomatoes, squashes, and peppers are  analyzed here as vegetables.
+
+#### Overview of Principal Components Analysis
+
+Principal components analysis (PCA) is a method of reducing numerous dimensions of data to fewer dimensions to give a clearer sense of the data.  These new dimensions are the principal components. The first principal component accounts for the most possible variance found in the data, followed by the second and so on.  PCA can be visualized with a biplot, which show variables as vectors who length indicate the variance of that variable along the new dimension of the principal component.  The direction of these vectors relative to each other indicate correlation, with vectors in similar directions being more positively correlated and those in opposite directions more negatively correlated. Vectors at right angles are not correlated to each other. Biplots may also show outlier observations as points. (Horst 2020)
+
+#### Principal Components Analysis of Vegetables
+
+```{r}
+food <- read_csv(here::here("data", "usda_nutrients.csv")) %>% # read in nutrient data
+  clean_names() # format variable names
+
+# create subset of just raw vegetables, no juices
+veg_sub<- food %>%
+  filter(food_group == "Vegetables and Vegetable Products") %>%
+  filter(str_detect(descrip, pattern = "raw"),
+         str_detect(descrip, pattern = "juice", negate = TRUE)) %>% 
+  select(8:30) # remove non-numeric (1:7) and recommended dietary allowance variables (31:45, duplicate 13:30)
+
+# Principal Component Analysis of Vegetable Nutrients
+veg_pca <- prcomp(veg_sub, scale = TRUE)
+
+# PCA Summary
+summary(veg_pca)
+
+# Vegetable PCA Visualization
+veg_biplot <- autoplot(veg_pca,
+                      colour = NA,
+                      loadings.label = TRUE,
+                      loadings.label.size = 3,
+                      loadings.label.colour = "black",
+                      loadings.label.repel = TRUE) +
+  scale_y_continuous(limits = c(-0.4, 0.5)) +
+  scale_x_continuous(limits = c(-0.05, 0.4)) +
+  theme_minimal() +
+    labs(title = "Vegetables",
+       caption = "Figure 1.\nBiplot of principal component analysis of nutrients in whole, raw vegetables. Parenthetical values on axes indicate the\npercent of variance captured by that principal component.\nData: USDA") +
+  theme(plot.caption = element_text(hjust = 0, face = "italic"))
+
+# Display visualization
+veg_biplot
+```
+The first and second principal components account for a total of `r `% of variance in the nutrient content of vegetables analyzed.
+
+-  *Vitamin A*, *vitamin C* and *vitamin E* content are negatively correlated to *vitamin B12* and *selenium* content.
+- *Vitamin A* content may be negatively correlated to *sugar* content.
+- *Vitamin A* content is not correlated to *niacin* content.
+- *Vitamin B12*, *vitamin C*, *vitamin E*, and *selenium* content are not correlated to seventeen other variables considered.
+- Those seventeen other variables are not negatively correlated to each other and some, such as *copper*, *phosphorus*, and *kilocalorie* content are highly correlated.
+
+
+#### Principal Components Analysis of Fruits
+```{r}
+# create subset of just raw fruits, no juices
+fruit_sub<- food %>%
+  filter(food_group == "Fruits and Fruit Juices") %>%
+  filter(str_detect(descrip, pattern = "raw"),
+         str_detect(descrip, pattern = "juice", negate = TRUE)) %>% 
+  select(8:30) %>%
+  select(- vit_b12_mcg)
+
+# Principal Component Analysis of Fruit Nutrients
+fruit_pca <- prcomp(fruit_sub, scale = TRUE)
+
+# PCA Summary
+summary(fruit_pca)
+
+# Fruit PCA Visualization
+fruit_biplot <- autoplot(fruit_pca,
+                      colour = NA,
+                      loadings.label = TRUE,
+                      loadings.label.size = 3,
+                      loadings.label.colour = "black",
+                      loadings.label.repel = TRUE) +
+  scale_y_continuous(limits = c(-0.4, 0.5)) +
+  scale_x_continuous(limits = c(-0.05, 0.4)) +
+  theme_minimal() +
+  labs(title = "Fruits",
+       caption = "Figure 2.\nBiplot of principal component analysis of nutrients in whole, raw fruit. Parenthetical values on axes indicate the\npercent of variance captured by that principal component.\nData: USDA") +
+  theme(plot.caption = element_text(hjust = 0, face = "italic"))
+
+# Display visualization
+fruit_biplot
+```
+
+- *Phosphorus* and *kilocalorie* content are highlight positively correlated in fruits, as in vegetables.
+- Unlike in vegetables, *copper* content is less correlated to *phophorus* and *kilocalorie* content in fruits, though there is still a positive correlation.
+- *Vitamin C* and *sugar* content may be negatively correlated.
+- *Zinc*, *folate*, *fat*, and *vitamin E* content are not correlated to *sugar*, *calcium*, *iron*, and *carbohydrate* concent.
+- Compared to vegetables, there is less overall correlation between nutrient content in fruits.
+
+#### References
+
+American Optometric Association. 2020. Can fruits, vegetables lower cataract risk? https://www.aoa.org/news/clinical-eye-care/fruits-vegetables-cataracts
+
+Horst, A. 2020. Lecture 2: PCA continued, RDA intro. ESM 244, Bren School of Environmental Science and Management, University of California, Santa Barbara. https://allisonhorst.github.io/
+
+U.S. Department of Agriculture, Agricultural Research Service. 2019. National Nutrient Database. https://fdc.nal.usda.gov/

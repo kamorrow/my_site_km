@@ -5,7 +5,7 @@
     <link>/tags/r-markdown/</link>
       <atom:link href="/tags/r-markdown/index.xml" rel="self" type="application/rss+xml" />
     <description>R Markdown</description>
-    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Sun, 12 Jan 2020 00:00:00 +0000</lastBuildDate>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Sun, 01 Mar 2020 15:53:48 -0800</lastBuildDate>
     <image>
       <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
       <title>R Markdown</title>
@@ -13,14 +13,708 @@
     </image>
     
     <item>
-      <title>Cool Post</title>
-      <link>/project/cool-project/</link>
-      <pubDate>Sun, 12 Jan 2020 00:00:00 +0000</pubDate>
-      <guid>/project/cool-project/</guid>
+      <title>Australia&#39;s Climate</title>
+      <link>/project/australia-fires/</link>
+      <pubDate>Sun, 01 Mar 2020 15:53:48 -0800</pubDate>
+      <guid>/project/australia-fires/</guid>
       <description>
 
 
+&lt;p&gt;At the end of 2019 and beginning of 2020, Australia experienced devastating bushfires. More than 11 million hectares burned, principally in the southeast provinces of New South Wales and Victoria. Only thirty-three people lost their lives, but more than a billion animals are estimated to have been killed, including on Kangaroo Island, a haven for biological diversity.&lt;/p&gt;
+&lt;p&gt;The current government of Australia shies away from connecting the intensity of the bushfires to climate change or acknowledging the intense impacts of climate change on the country. CLimate scientists, on the othe rhand, agree that the extremely high temperatures and severe drought that fueled the bushfires are undoubtably linked to climate change. (BBC)&lt;/p&gt;
+&lt;p&gt;In light of the devastation of these fires, the R For Data Science #tidytuesday prompt for 01-07-2020 included data on the fires and the climate of Australia. Here, temperature and rainfall data are used to construct climatology graphs for five Australian cities: Brisbane, Canberra, Melbourne, Perth, and Sydney.&lt;/p&gt;
+&lt;div id=&#34;set-up&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Set Up&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)
+library(lubridate)
+library(here)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;read-data&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Read Data&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;rainfall &amp;lt;- readr::read_csv(&amp;#39;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv&amp;#39;)
 
+temperature &amp;lt;- readr::read_csv(&amp;#39;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv&amp;#39;)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;wrangling&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Wrangling&lt;/h3&gt;
+&lt;div id=&#34;rainfall&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Rainfall&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;rain_date &amp;lt;- rainfall %&amp;gt;%
+  mutate(date_new = lubridate::ymd(paste(year, month, day, sep = &amp;quot;-&amp;quot;))) %&amp;gt;% # concatenate dates and make them Date type
+  mutate(month = as.numeric(month)) %&amp;gt;% # prep months for applying names
+  mutate(month_name = month.abb[month]) %&amp;gt;%  # apply names to months
+  mutate(month_name = fct_relevel(month_name, levels = month.abb)) # relevel to get month names in order&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;temperature&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Temperature&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;temp &amp;lt;- temperature %&amp;gt;%
+  mutate(city_name = str_to_title(city_name)) %&amp;gt;% #clean up city names (BRISBANE to Brisbane)
+  mutate(month = lubridate::month(date)) %&amp;gt;% # pull month from date
+  mutate(month_name = month.abb[month]) %&amp;gt;%  # apply names to months
+  mutate(month_name = fct_relevel(month_name, levels = month.abb)) %&amp;gt;%  # relevel month names
+  mutate(year = lubridate::year(date))&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&#34;prep-data-for-constructing-climatologies&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Prep Data for Constructing Climatologies&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;temp_summary &amp;lt;-  temp %&amp;gt;%
+  drop_na() %&amp;gt;% # this probably isn&amp;#39;t a good idea, but let&amp;#39;s assume that the loss of data is evenly distributed throughout the time range and doesn&amp;#39;t impact the mean monthly temperature
+  group_by(city_name, month_name, temp_type) %&amp;gt;%
+  summarize(mean_temp = mean(temperature)) %&amp;gt;%
+  pivot_wider(names_from = temp_type, values_from = mean_temp, names_prefix = &amp;quot;mean_temp_&amp;quot;)
+
+rain_summary &amp;lt;- rain_date %&amp;gt;%
+  mutate(rain_0 = ifelse(is.na(rainfall), 0, rainfall)) %&amp;gt;% # another questionable assumption
+  group_by(city_name, month_name) %&amp;gt;%
+  summarize(mean_rainfall = mean(rain_0))
+
+climate_mean &amp;lt;- merge(temp_summary, rain_summary)
+
+cities &amp;lt;- unique(climate_mean$city_name) # gets list of the common cities from the merge&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;plotting-climatologies&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Plotting Climatologies&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Plot one climatology per city with both temperature and rainfall data (missing some sloppily removed before)
+
+for(i in seq_along(cities)){
+  # plot data for each city common between the temperature and rainfall data
+  ggplot(data = subset(climate_mean, climate_mean$city_name == cities[i])) +
+    # blue columns for rainfall
+    geom_col(aes(x = month_name,
+                 y = mean_rainfall*4), # adjustment to make the scales work together
+             color = &amp;quot;navy&amp;quot;, fill = &amp;quot;blue&amp;quot;, alpha = &amp;quot;0.6&amp;quot;) +
+    # red ribbon for area between mean max temp and mean min temp
+    geom_ribbon(aes(x = month_name,
+                    ymax = mean_temp_max,
+                    ymin = mean_temp_min, group = 1),
+                fill = &amp;quot;red&amp;quot;,
+                alpha = 0.3) +
+    # red line and points for mean temeprature as mean of mean max and min temp
+    geom_line(aes(x = month_name,
+                  y = ((mean_temp_max + mean_temp_min)/2),
+                  group = 1),
+              color = &amp;quot;red&amp;quot;,
+              size = 1) +
+    geom_point(aes(x = month_name,
+                   y = ((mean_temp_max + mean_temp_min)/2)),
+               color = &amp;quot;red&amp;quot;) +
+    # scale wrangling
+    scale_y_continuous(limits = c(-2, 35), # keeps scales consistent across plots
+                       sec.axis = sec_axis(~./4, name = &amp;quot;Rainfall (mm)&amp;quot;)) + # adds second axis for rainfall, adjusted to counteract the scale factor above
+    scale_colour_manual(values = c(&amp;quot;blue&amp;quot;, &amp;quot;red&amp;quot;)) +
+    labs(y = &amp;quot;Temperature (°C)&amp;quot;,
+         x = &amp;quot;&amp;quot;,
+         title = &amp;quot;Monthly Mean Temperature Range &amp;amp; Mean Rainfall&amp;quot;,
+         # subtitle of plot based on city in question
+         subtitle = paste(cities[i],&amp;quot;, Australia&amp;quot;, sep = &amp;quot;&amp;quot;),
+         caption = paste(&amp;quot;Mean monthly temperature shown as red points and line with the range between the mean\nmaximum and mean minimum temperatures shaded in red; blue columns show mean\nmonthly rainfall for &amp;quot;, cities[i], &amp;quot;, Australia.\n\nData: Australian Bureau of Meterology\n#tidytuesday 2020-01-07\nKeene Morrow&amp;quot;,
+                         sep = &amp;quot;&amp;quot;)) + 
+    theme_minimal() +
+    theme(plot.caption = element_text(hjust = 0, face = &amp;quot;italic&amp;quot;))
+  
+  ggsave(here::here(&amp;quot;figures&amp;quot;, paste(cities[i], &amp;quot;_climate.png&amp;quot;, sep = &amp;quot;&amp;quot;)),
+         height = 7, width = 7)
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;figures/Brisbane_climate.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;figures/Canberra_climate.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;figures/Melbourne_climate.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;figures/Perth_climate.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;figures/Sydney_climate.png&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;summary&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Summary&lt;/h3&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;Wrangled dates with &lt;code&gt;lubridate&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Made some questionable assumptions about NA’s in the data.&lt;/li&gt;
+&lt;li&gt;Used &lt;code&gt;for&lt;/code&gt; loop to generate five plots of climatologies, one for each of the cities with data for both temperature and rainfall.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr /&gt;
+&lt;/div&gt;
+&lt;div id=&#34;references&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;References&lt;/h3&gt;
+&lt;p&gt;“Australia Fires.” #tidytuesday, R for Data Science. &lt;a href=&#34;https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-01-07&#34; class=&#34;uri&#34;&gt;https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-01-07&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;“Australia fires: A visual guide to the bushfire crisis.” British Broadcasting Company. 01-31-2020. &lt;a href=&#34;https://www.bbc.com/news/world-australia-50951043&#34; class=&#34;uri&#34;&gt;https://www.bbc.com/news/world-australia-50951043&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;“Climate Data Online.” Australian Bureau of Meterology. &lt;a href=&#34;http://www.bom.gov.au/climate/data/&#34; class=&#34;uri&#34;&gt;http://www.bom.gov.au/climate/data/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Ghosh, Pallab. “Climate change boosted Australia bushfire risk by at least 30%.” British Broadcasting Company, 03-04-2020. &lt;a href=&#34;https://www.bbc.com/news/science-environment-51742646&#34; class=&#34;uri&#34;&gt;https://www.bbc.com/news/science-environment-51742646&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Gill, Victoria. “Australia fires were far worse than any prediction.” British Broadcasting Company. 02-24-2020. &lt;a href=&#34;https://www.bbc.com/news/science-environment-51590080?intlink_from_url=https://www.bbc.com/news/topics/c2wlvy54gd1t/australia-fires&amp;amp;link_location=live-reporting-story&#34; class=&#34;uri&#34;&gt;https://www.bbc.com/news/science-environment-51590080?intlink_from_url=https://www.bbc.com/news/topics/c2wlvy54gd1t/australia-fires&amp;amp;link_location=live-reporting-story&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Fruits &amp; Vegetables</title>
+      <link>/project/nutrient-analysis/</link>
+      <pubDate>Sun, 01 Mar 2020 15:53:48 -0800</pubDate>
+      <guid>/project/nutrient-analysis/</guid>
+      <description>
+
+
+&lt;p&gt;Consuming fruits and vegetables is linked to health benefits, due to their density of nutrients. Principal components analysis was performed on USDA data containing nutrient information about whole, raw fruits and vegetables.
+The data groups fruits and vegetables by their common culinary uses in the United States, rather than their botanic classifications. As such, botanic fruits such as tomatoes, squashes, and peppers are analyzed here as vegetables.&lt;/p&gt;
+&lt;div id=&#34;overview-of-principal-components-analysis&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Overview of Principal Components Analysis&lt;/h4&gt;
+&lt;p&gt;Principal components analysis (PCA) is a method of reducing numerous dimensions of data to fewer dimensions to give a clearer sense of the data. These new dimensions are the principal components. The first principal component accounts for the most possible variance found in the data, followed by the second and so on. PCA can be visualized with a biplot, which show variables as vectors who length indicate the variance of that variable along the new dimension of the principal component. The direction of these vectors relative to each other indicate correlation, with vectors in similar directions being more positively correlated and those in opposite directions more negatively correlated. Vectors at right angles are not correlated to each other. Biplots may also show outlier observations as points. (Horst 2020)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;principal-components-analysis-of-vegetables&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Principal Components Analysis of Vegetables&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;food &amp;lt;- read_csv(here::here(&amp;quot;data&amp;quot;, &amp;quot;usda_nutrients.csv&amp;quot;)) %&amp;gt;% # read in nutrient data
+  clean_names() # format variable names
+
+# create subset of just raw vegetables, no juices
+veg_sub&amp;lt;- food %&amp;gt;%
+  filter(food_group == &amp;quot;Vegetables and Vegetable Products&amp;quot;) %&amp;gt;%
+  filter(str_detect(descrip, pattern = &amp;quot;raw&amp;quot;),
+         str_detect(descrip, pattern = &amp;quot;juice&amp;quot;, negate = TRUE)) %&amp;gt;% 
+  select(8:30) # remove non-numeric (1:7) and recommended dietary allowance variables (31:45, duplicate 13:30)
+
+# Principal Component Analysis of Vegetable Nutrients
+veg_pca &amp;lt;- prcomp(veg_sub, scale = TRUE)
+
+# PCA Summary
+summary(veg_pca)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Importance of components:
+##                           PC1    PC2     PC3     PC4     PC5    PC6     PC7
+## Standard deviation     2.4337 1.6370 1.49852 1.33295 1.19472 1.0670 1.04249
+## Proportion of Variance 0.2575 0.1165 0.09763 0.07725 0.06206 0.0495 0.04725
+## Cumulative Proportion  0.2575 0.3740 0.47165 0.54890 0.61096 0.6605 0.70772
+##                            PC8     PC9   PC10   PC11    PC12    PC13    PC14
+## Standard deviation     0.92806 0.90630 0.8334 0.8053 0.78424 0.73597 0.68947
+## Proportion of Variance 0.03745 0.03571 0.0302 0.0282 0.02674 0.02355 0.02067
+## Cumulative Proportion  0.74516 0.78088 0.8111 0.8393 0.86601 0.88956 0.91023
+##                           PC15    PC16    PC17    PC18    PC19    PC20    PC21
+## Standard deviation     0.66394 0.63829 0.54033 0.48548 0.46292 0.42699 0.39664
+## Proportion of Variance 0.01917 0.01771 0.01269 0.01025 0.00932 0.00793 0.00684
+## Cumulative Proportion  0.92940 0.94711 0.95980 0.97005 0.97937 0.98730 0.99414
+##                           PC22    PC23
+## Standard deviation     0.36236 0.05990
+## Proportion of Variance 0.00571 0.00016
+## Cumulative Proportion  0.99984 1.00000&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Vegetable PCA Visualization
+veg_biplot &amp;lt;- autoplot(veg_pca,
+                      colour = NA,
+                      loadings.label = TRUE,
+                      loadings.label.size = 3,
+                      loadings.label.colour = &amp;quot;black&amp;quot;,
+                      loadings.label.repel = TRUE) +
+  scale_y_continuous(limits = c(-0.4, 0.5)) +
+  scale_x_continuous(limits = c(-0.05, 0.4)) +
+  theme_minimal() +
+    labs(title = &amp;quot;Vegetables&amp;quot;,
+       caption = &amp;quot;Figure 1.\nBiplot of principal component analysis of nutrients in whole, raw vegetables. Parenthetical values on axes indicate the\npercent of variance captured by that principal component.\nData: USDA&amp;quot;) +
+  theme(plot.caption = element_text(hjust = 0, face = &amp;quot;italic&amp;quot;))
+
+# Display visualization
+veg_biplot&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/project/nutrient-analysis/index_files/figure-html/unnamed-chunk-1-1.png&#34; width=&#34;672&#34; /&gt;
+The first and second principal components account for a total of &lt;code&gt;r&lt;/code&gt;% of variance in the nutrient content of vegetables analyzed.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;em&gt;Vitamin A&lt;/em&gt;, &lt;em&gt;vitamin C&lt;/em&gt; and &lt;em&gt;vitamin E&lt;/em&gt; content are negatively correlated to &lt;em&gt;vitamin B12&lt;/em&gt; and &lt;em&gt;selenium&lt;/em&gt; content.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Vitamin A&lt;/em&gt; content may be negatively correlated to &lt;em&gt;sugar&lt;/em&gt; content.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Vitamin A&lt;/em&gt; content is not correlated to &lt;em&gt;niacin&lt;/em&gt; content.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Vitamin B12&lt;/em&gt;, &lt;em&gt;vitamin C&lt;/em&gt;, &lt;em&gt;vitamin E&lt;/em&gt;, and &lt;em&gt;selenium&lt;/em&gt; content are not correlated to seventeen other variables considered.&lt;/li&gt;
+&lt;li&gt;Those seventeen other variables are not negatively correlated to each other and some, such as &lt;em&gt;copper&lt;/em&gt;, &lt;em&gt;phosphorus&lt;/em&gt;, and &lt;em&gt;kilocalorie&lt;/em&gt; content are highly correlated.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div id=&#34;principal-components-analysis-of-fruits&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Principal Components Analysis of Fruits&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# create subset of just raw fruits, no juices
+fruit_sub&amp;lt;- food %&amp;gt;%
+  filter(food_group == &amp;quot;Fruits and Fruit Juices&amp;quot;) %&amp;gt;%
+  filter(str_detect(descrip, pattern = &amp;quot;raw&amp;quot;),
+         str_detect(descrip, pattern = &amp;quot;juice&amp;quot;, negate = TRUE)) %&amp;gt;% 
+  select(8:30) %&amp;gt;%
+  select(- vit_b12_mcg)
+
+# Principal Component Analysis of Fruit Nutrients
+fruit_pca &amp;lt;- prcomp(fruit_sub, scale = TRUE)
+
+# PCA Summary
+summary(fruit_pca)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Importance of components:
+##                           PC1    PC2     PC3     PC4     PC5     PC6    PC7
+## Standard deviation     2.5178 1.6490 1.31492 1.26970 1.15165 1.05769 1.0456
+## Proportion of Variance 0.2881 0.1236 0.07859 0.07328 0.06029 0.05085 0.0497
+## Cumulative Proportion  0.2881 0.4117 0.49033 0.56361 0.62390 0.67475 0.7244
+##                            PC8     PC9    PC10    PC11    PC12    PC13    PC14
+## Standard deviation     0.96091 0.88710 0.81296 0.77827 0.77042 0.72526 0.65188
+## Proportion of Variance 0.04197 0.03577 0.03004 0.02753 0.02698 0.02391 0.01932
+## Cumulative Proportion  0.76641 0.80219 0.83223 0.85976 0.88674 0.91065 0.92996
+##                           PC15   PC16    PC17   PC18    PC19   PC20    PC21
+## Standard deviation     0.60865 0.5914 0.51553 0.4300 0.37727 0.3478 0.32213
+## Proportion of Variance 0.01684 0.0159 0.01208 0.0084 0.00647 0.0055 0.00472
+## Cumulative Proportion  0.94680 0.9627 0.97478 0.9832 0.98965 0.9951 0.99987
+##                           PC22
+## Standard deviation     0.05380
+## Proportion of Variance 0.00013
+## Cumulative Proportion  1.00000&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Fruit PCA Visualization
+fruit_biplot &amp;lt;- autoplot(fruit_pca,
+                      colour = NA,
+                      loadings.label = TRUE,
+                      loadings.label.size = 3,
+                      loadings.label.colour = &amp;quot;black&amp;quot;,
+                      loadings.label.repel = TRUE) +
+  scale_y_continuous(limits = c(-0.4, 0.5)) +
+  scale_x_continuous(limits = c(-0.05, 0.4)) +
+  theme_minimal() +
+  labs(title = &amp;quot;Fruits&amp;quot;,
+       caption = &amp;quot;Figure 2.\nBiplot of principal component analysis of nutrients in whole, raw fruit. Parenthetical values on axes indicate the\npercent of variance captured by that principal component.\nData: USDA&amp;quot;) +
+  theme(plot.caption = element_text(hjust = 0, face = &amp;quot;italic&amp;quot;))
+
+# Display visualization
+fruit_biplot&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/project/nutrient-analysis/index_files/figure-html/unnamed-chunk-2-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;em&gt;Phosphorus&lt;/em&gt; and &lt;em&gt;kilocalorie&lt;/em&gt; content are highlight positively correlated in fruits, as in vegetables.&lt;/li&gt;
+&lt;li&gt;Unlike in vegetables, &lt;em&gt;copper&lt;/em&gt; content is less correlated to &lt;em&gt;phophorus&lt;/em&gt; and &lt;em&gt;kilocalorie&lt;/em&gt; content in fruits, though there is still a positive correlation.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Vitamin C&lt;/em&gt; and &lt;em&gt;sugar&lt;/em&gt; content may be negatively correlated.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Zinc&lt;/em&gt;, &lt;em&gt;folate&lt;/em&gt;, &lt;em&gt;fat&lt;/em&gt;, and &lt;em&gt;vitamin E&lt;/em&gt; content are not correlated to &lt;em&gt;sugar&lt;/em&gt;, &lt;em&gt;calcium&lt;/em&gt;, &lt;em&gt;iron&lt;/em&gt;, and &lt;em&gt;carbohydrate&lt;/em&gt; concent.&lt;/li&gt;
+&lt;li&gt;Compared to vegetables, there is less overall correlation between nutrient content in fruits.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div id=&#34;references&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;References&lt;/h4&gt;
+&lt;p&gt;American Optometric Association. 2020. Can fruits, vegetables lower cataract risk? &lt;a href=&#34;https://www.aoa.org/news/clinical-eye-care/fruits-vegetables-cataracts&#34; class=&#34;uri&#34;&gt;https://www.aoa.org/news/clinical-eye-care/fruits-vegetables-cataracts&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Horst, A. 2020. Lecture 2: PCA continued, RDA intro. ESM 244, Bren School of Environmental Science and Management, University of California, Santa Barbara. &lt;a href=&#34;https://allisonhorst.github.io/&#34; class=&#34;uri&#34;&gt;https://allisonhorst.github.io/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;U.S. Department of Agriculture, Agricultural Research Service. 2019. National Nutrient Database. &lt;a href=&#34;https://fdc.nal.usda.gov/&#34; class=&#34;uri&#34;&gt;https://fdc.nal.usda.gov/&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Snowshoe Hares</title>
+      <link>/project/hareanalysis/</link>
+      <pubDate>Sat, 01 Feb 2020 15:53:48 -0800</pubDate>
+      <guid>/project/hareanalysis/</guid>
+      <description>
+&lt;script src=&#34;/rmarkdown-libs/kePrint/kePrint.js&#34;&gt;&lt;/script&gt;
+
+
+&lt;p&gt;&lt;em&gt;Lepus americanus&lt;/em&gt;, the snowshoe hare, is a species of hare found in the northern areas of North America. (Murray &amp;amp; Smith 2008) It is known for its change in coloration from brown in the summer to white in the winter and its long, snowshoe-like, hind feet. (Montana 2018) The population of snowshoe hares at Bonanza Creek Experimental Forest in interior Alaska was monitored using capture-recapture methods from 1999 to 2012. (Kielland, Chapin, &amp;amp; Ruess 2017)&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;figures/bonanza_map.jpg&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Study site at Bonanza Creek, Alaska, Bonanza LTER, UAF&lt;/em&gt;&lt;/p&gt;
+&lt;div id=&#34;analysis-results&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Analysis &amp;amp; Results&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Read in data
+bunnies &amp;lt;- read_csv(here::here(&amp;quot;data&amp;quot;, &amp;quot;showshoe_lter.csv&amp;quot;)) # yes, yes rabbits != hares&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Prepare data
+adults_all &amp;lt;- bunnies %&amp;gt;%
+  mutate(date = lubridate::mdy(date)) %&amp;gt;% # dates to date class
+  mutate(sex = str_to_upper(sex), # impose order on strings
+         age = str_to_upper(age),
+         month = month(date, label = TRUE), # create month variable
+         year = year(date)) %&amp;gt;% # create year variable
+  filter(sex %in% c(&amp;quot;M&amp;quot;, &amp;quot;F&amp;quot;)) %&amp;gt;% # remove observations without definitive sex recorded
+  drop_na(age, weight) %&amp;gt;% # remove observations without age or weight recorded
+  filter(str_detect(age, pattern = &amp;quot;A&amp;quot;)) %&amp;gt;% # filter for adults only
+  mutate(age = &amp;quot;A&amp;quot;) # wrangle age for consistency&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Create data frame of only adult females
+adults_f &amp;lt;- adults_all %&amp;gt;%
+  filter(sex == &amp;quot;F&amp;quot;)
+
+# Create data frame of only adult males
+adults_m &amp;lt;- adults_all %&amp;gt;%
+  filter(sex == &amp;quot;M&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Visualize weight distribution
+## Adult females versus all adults
+ggplot() +
+  # All adults
+  geom_density_ridges(data = adults_all,
+                      aes(x = weight, y = month),
+                      fill = &amp;quot;grey50&amp;quot;,
+                      scale = 0.9) +
+  # Adult females only
+  geom_density_ridges(data = adults_f,
+                      aes(x = weight, y = month, fill = month),
+                      alpha = 0.8,
+                      show.legend = FALSE,
+                      scale = 0.9) +
+  scale_y_discrete(expand = expand_scale(mult = c(0.01, 0.15))) +
+  scale_x_continuous(limits = c(500, 2500)) +
+  labs(title = &amp;quot;Adult Snowshoe Hares&amp;quot;,
+       subtitle = &amp;quot;Females&amp;quot;,
+       x = &amp;quot;Mass (g)&amp;quot;,
+       y = &amp;quot;&amp;quot;) +
+## Adult males versus all adults
+ggplot() +
+  # All adults
+  geom_density_ridges(data = adults_all,
+                      aes(x = weight, y = month),
+                      fill = &amp;quot;grey50&amp;quot;,
+                      scale = 0.9) +
+  # Adult males only
+  geom_density_ridges(data = adults_m,
+                      aes(x = weight, y = month, fill = month),
+                      alpha = 0.8,
+                      show.legend = FALSE,
+                      scale = 0.9) +
+  scale_y_discrete(expand = expand_scale(mult = c(0.01, 0.15))) +
+  scale_x_continuous(limits = c(500, 2500)) +
+  labs(subtitle = &amp;quot;Males&amp;quot;,
+       x = &amp;quot;&amp;quot;,
+       y = &amp;quot;&amp;quot;) +
+plot_annotation(caption = &amp;quot;Density distributions of adult snowshoe hare mass (g) by month for hares by sex (color) compared to all hares (grey),\n1999 to 2012.  No male hares were observed in May and only one was observed in July. Distributions of female hares\nversus all hares deviate slightly in these months due to the density estimation methodology.\nData: Bonanza Creek LTER Site&amp;quot;,
+                theme = theme(plot.caption = element_text(hjust = 0, face = &amp;quot;italic&amp;quot;)))&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/project/hare-analysis/index_files/figure-html/unnamed-chunk-4-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Create data frame of observation counts by month, females, males, and total
+adults_count &amp;lt;- adults_all %&amp;gt;%
+  group_by(month, sex) %&amp;gt;%
+  count(month) %&amp;gt;%
+  pivot_wider(names_from = sex, values_from = n) %&amp;gt;%
+  rename(Female = F,
+         Male = M,
+         Month = month) %&amp;gt;%
+  mutate(Male = ifelse(is.na(Male), 0, Male),
+         Total = Female + Male)
+
+# Display count data frame as table
+kable(adults_count) %&amp;gt;% 
+  kable_styling(bootstrap_options = &amp;quot;striped&amp;quot;, 
+                full_width = F,
+                position = &amp;quot;center&amp;quot;
+                ) %&amp;gt;% 
+  add_header_above(c(&amp;quot;Table 1. Adult Snowshoe Hare\nCounts by month, 1999 to 2012&amp;quot; = 4))&lt;/code&gt;&lt;/pre&gt;
+&lt;table class=&#34;table table-striped&#34; style=&#34;width: auto !important; margin-left: auto; margin-right: auto;&#34;&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; &#34; colspan=&#34;4&#34;&gt;
+&lt;div style=&#34;border-bottom: 1px solid #ddd; padding-bottom: 5px; &#34;&gt;
+Table 1. Adult Snowshoe Hare&lt;br&gt;Counts by month, 1999 to 2012
+&lt;/div&gt;
+&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left;&#34;&gt;
+Month
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;&#34;&gt;
+Female
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;&#34;&gt;
+Male
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;&#34;&gt;
+Total
+&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Mar
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+17
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+30
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+47
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Apr
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+47
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+May
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jun
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+58
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+46
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+104
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jul
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Aug
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+165
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+105
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+270
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sep
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+24
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+45
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Oct
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+28
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+55
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Nov
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+68
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+43
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+111
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;No observations were made between December and February in any year. Variation in monthly observations is likely due to survey frequency and conditions on the ground rather than actual abundance.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Create data frame of mean weights by month, females and males
+adults_summary_sex &amp;lt;- adults_all %&amp;gt;%
+  group_by(month, sex) %&amp;gt;%
+  summarize(mean_weight = mean(weight)) %&amp;gt;%
+  pivot_wider(names_from = sex, values_from = mean_weight) %&amp;gt;%
+  rename(Female = F,
+         Male = M)
+
+# Create data frame of mean weights by month for all adults
+adults_summary_all &amp;lt;- adults_all %&amp;gt;%
+  group_by(month) %&amp;gt;%
+  summarize(All = mean(weight))
+
+# Combine data frames
+adults_summary &amp;lt;- merge(adults_summary_sex, adults_summary_all)
+
+# Display mean weight data frame as table
+kable(adults_count) %&amp;gt;% 
+  kable_styling(bootstrap_options = &amp;quot;striped&amp;quot;, 
+                full_width = F,
+                position = &amp;quot;center&amp;quot;
+                ) %&amp;gt;% 
+  add_header_above(c(&amp;quot;Table 2. Adult Snowshoe Hare\nMean weights by month, 1999 to 2012&amp;quot; = 4))&lt;/code&gt;&lt;/pre&gt;
+&lt;table class=&#34;table table-striped&#34; style=&#34;width: auto !important; margin-left: auto; margin-right: auto;&#34;&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; &#34; colspan=&#34;4&#34;&gt;
+&lt;div style=&#34;border-bottom: 1px solid #ddd; padding-bottom: 5px; &#34;&gt;
+Table 2. Adult Snowshoe Hare&lt;br&gt;Mean weights by month, 1999 to 2012
+&lt;/div&gt;
+&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left;&#34;&gt;
+Month
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;&#34;&gt;
+Female
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;&#34;&gt;
+Male
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;&#34;&gt;
+Total
+&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Mar
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+17
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+30
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+47
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Apr
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+47
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+May
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jun
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+58
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+46
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+104
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Jul
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Aug
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+165
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+105
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+270
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Sep
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+24
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+45
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Oct
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+28
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+55
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Nov
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+68
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+43
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+111
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr /&gt;
+&lt;/div&gt;
+&lt;div id=&#34;references&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;References&lt;/h4&gt;
+&lt;p&gt;Bonanza Creek LTER. Institute of Arctic Biology, University of Alaska Fairbanks. &lt;a href=&#34;http://www.lter.uaf.edu/&#34; class=&#34;uri&#34;&gt;http://www.lter.uaf.edu/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Gordon, D. &amp;amp; E. Robertson. 2013. Snowshoe Hare (Lepus americanus), white morph, Shirleys Bay, Ottawa, Ontario, Canada. &lt;a href=&#34;https://commons.wikimedia.org/wiki/File:Snowshoe_Hare,_Shirleys_Bay.jpg&#34; class=&#34;uri&#34;&gt;https://commons.wikimedia.org/wiki/File:Snowshoe_Hare,_Shirleys_Bay.jpg&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Kielland K., F. S. Chapin, R. W. Ruess. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present. Environmental Data Initiative. &lt;a href=&#34;https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14&#34; class=&#34;uri&#34;&gt;https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Montana. 2018. Snowshoe Hare - &lt;em&gt;Lepus americanus&lt;/em&gt;. Montana Field Guide. Montana Natural Heritage Program and Montana Fish, Wildlife and Parks. &lt;a href=&#34;http://fieldguide.mt.gov/speciesDetail.aspx?elcode=AMAEB03010&#34; class=&#34;uri&#34;&gt;http://fieldguide.mt.gov/speciesDetail.aspx?elcode=AMAEB03010&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Murray, D. &amp;amp; Smith, A.T. 2008. &lt;em&gt;Lepus americanus&lt;/em&gt; . The IUCN Red List of Threatened Species 2008: e.T41273A10411354. &lt;a href=&#34;https://dx.doi.org/10.2305/IUCN.UK.2008.RLTS.T41273A10411354.en&#34; class=&#34;uri&#34;&gt;https://dx.doi.org/10.2305/IUCN.UK.2008.RLTS.T41273A10411354.en&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;National Park Service. 2004. Snowshoe Hare. &lt;a href=&#34;http://www.nps.gov/noca/journey/images/for_car/hare_snowshoe.htm&#34; class=&#34;uri&#34;&gt;http://www.nps.gov/noca/journey/images/for_car/hare_snowshoe.htm&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
 </description>
     </item>
     
