@@ -28,10 +28,10 @@
   
     
   
-  <meta name="description" content="Principal components analysis of nutrient content">
+  <meta name="description" content="Land Use &amp; Watersheds">
 
   
-  <link rel="alternate" hreflang="en-us" href="/project/nutrient-analysis/">
+  <link rel="alternate" hreflang="en-us" href="/project/hawaii/">
 
   
 
@@ -215,7 +215,7 @@
   <link rel="icon" type="image/png" href="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_32x32_fill_lanczos_center_2.png">
   <link rel="apple-touch-icon" type="image/png" href="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png">
 
-  <link rel="canonical" href="/project/nutrient-analysis/">
+  <link rel="canonical" href="/project/hawaii/">
 
   
   
@@ -231,15 +231,15 @@
   <meta property="twitter:creator" content="@keene_morrow">
   
   <meta property="og:site_name" content="Keene Morrow">
-  <meta property="og:url" content="/project/nutrient-analysis/">
-  <meta property="og:title" content="Fruits &amp; Vegetables | Keene Morrow">
-  <meta property="og:description" content="Principal components analysis of nutrient content"><meta property="og:image" content="/project/nutrient-analysis/featured.jpg">
-  <meta property="twitter:image" content="/project/nutrient-analysis/featured.jpg"><meta property="og:locale" content="en-us">
+  <meta property="og:url" content="/project/hawaii/">
+  <meta property="og:title" content="Hawaii | Keene Morrow">
+  <meta property="og:description" content="Land Use &amp; Watersheds"><meta property="og:image" content="/project/hawaii/featured.jpg">
+  <meta property="twitter:image" content="/project/hawaii/featured.jpg"><meta property="og:locale" content="en-us">
   
     
-      <meta property="article:published_time" content="2020-03-01T15:53:48-08:00">
+      <meta property="article:published_time" content="2020-02-01T15:53:48-08:00">
     
-    <meta property="article:modified_time" content="2020-03-01T15:53:48-08:00">
+    <meta property="article:modified_time" content="2020-02-01T15:53:48-08:00">
   
 
   
@@ -263,16 +263,16 @@
   "@type": "Article",
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": "/project/nutrient-analysis/"
+    "@id": "/project/hawaii/"
   },
-  "headline": "Fruits \u0026 Vegetables",
+  "headline": "Hawaii",
   
   "image": [
-    "/project/nutrient-analysis/featured.jpg"
+    "/project/hawaii/featured.jpg"
   ],
   
   "datePublished": "0001-01-01T00:00:00Z",
-  "dateModified": "2020-03-01T15:53:48-08:00",
+  "dateModified": "2020-02-01T15:53:48-08:00",
   
   "author": {
     "@type": "Person",
@@ -287,7 +287,7 @@
       "url": "img//"
     }
   },
-  "description": "Principal components analysis of nutrient content"
+  "description": "Land Use \u0026 Watersheds"
 }
 </script>
 
@@ -305,7 +305,7 @@
 
 
 
-  <title>Fruits &amp; Vegetables | Keene Morrow</title>
+  <title>Hawaii | Keene Morrow</title>
 
 </head>
 
@@ -598,7 +598,7 @@
 
 
 <div class="article-container pt-3">
-  <h1>Fruits &amp; Vegetables</h1>
+  <h1>Hawaii</h1>
 
   
 
@@ -616,7 +616,7 @@
     
       
     
-    Mar 1, 2020
+    Feb 1, 2020
   </span>
   
 
@@ -655,10 +655,10 @@
 </div>
 
 
-<div class="article-header article-container featured-image-wrapper mt-4 mb-4" style="max-width: 720px; max-height: 315px;">
+<div class="article-header article-container featured-image-wrapper mt-4 mb-4" style="max-width: 720px; max-height: 560px;">
   <div style="position: relative">
-    <img src="/project/nutrient-analysis/featured_hu18d669690a1dd262b6ace0bdc6c52bde_414792_720x0_resize_q90_lanczos.jpg" alt="" class="featured-image">
-    <span class="article-header-caption">AOA 2019</span>
+    <img src="/project/hawaii/featured_hud20d437b34fc7c5950053cf94589cd49_101967_720x0_resize_q90_lanczos.jpg" alt="" class="featured-image">
+    <span class="article-header-caption">NASA</span>
   </div>
 </div>
 
@@ -670,134 +670,116 @@
       
 
 
-<p>Consuming fruits and vegetables is linked to health benefits, due to their density of nutrients. Principal components analysis was performed on USDA data containing nutrient information about whole, raw fruits and vegetables.
-The data groups fruits and vegetables by their common culinary uses in the United States, rather than their botanic classifications. As such, botanic fruits such as tomatoes, squashes, and peppers are analyzed here as vegetables.</p>
-<div id="overview-of-principal-components-analysis" class="section level4">
-<h4>Overview of Principal Components Analysis</h4>
-<p>Principal components analysis (PCA) is a method of reducing numerous dimensions of data to fewer dimensions to give a clearer sense of the data. These new dimensions are the principal components. The first principal component accounts for the most possible variance found in the data, followed by the second and so on. PCA can be visualized with a biplot, which show variables as vectors who length indicate the variance of that variable along the new dimension of the principal component. The direction of these vectors relative to each other indicate correlation, with vectors in similar directions being more positively correlated and those in opposite directions more negatively correlated. Vectors at right angles are not correlated to each other. Biplots may also show outlier observations as points. (Horst 2020)</p>
+<div id="land-use-land-cover" class="section level4">
+<h4>Land Use &amp; Land Cover</h4>
+<pre class="r"><code>land &lt;- read_sf(dsn = here::here(&quot;data&quot;),
+                layer = &quot;landuse&quot;)
+
+land_simple &lt;- land %&gt;% 
+  mutate(land_simple = case_when(landcover == &quot;Residential&quot; ~ &quot;Urban or Built-up land&quot;,
+                          landcover == &quot;Commercial and Services&quot; ~ &quot;Urban or Built-up land&quot;,
+                          landcover == &quot;Industrial&quot; ~ &quot;Urban or Built-up land&quot;,
+                          landcover == &quot;Transportation, Communications and Utilities&quot; ~ &quot;Urban or Built-up land&quot;,
+                          landcover == &quot;Industrial and Commercial Complexes&quot; ~ &quot;Urban or Built-up land&quot;,
+                          landcover == &quot;Mixed Urban or Built-up Land&quot; ~ &quot;Urban or Built-up land&quot;,
+                          landcover == &quot;Other Urban or Built-up Land&quot; ~ &quot;Urban or Built-up land&quot;,
+                          landcover == &quot;Cropland and Pasture&quot; ~ &quot;Agricultural Land&quot;,
+                          landcover == &quot;Orchards, Groves, Vineyards, Nurseries and Ornamental Horticultural Areas&quot; ~ &quot;Agricultural Land&quot;,
+                          landcover == &quot;Confined Feeding Operations&quot; ~ &quot;Agricultural Land&quot;,
+                          landcover == &quot;Other Agricultural Land&quot; ~ &quot;Agricultural Land&quot;,
+                          landcover == &quot;Herbaceous Rangeland&quot; ~ &quot;Rangeland&quot;,
+                          landcover == &quot;Shrub and Brush Rangeland&quot; ~ &quot;Rangeland&quot;,
+                          landcover == &quot;Mixed Rangeland&quot; ~ &quot;Rangeland&quot;,
+                          landcover == &quot;Deciduous Forest Land&quot; ~ &quot;Forest Land&quot;,
+                          landcover == &quot;Evergreen Forest Land&quot; ~ &quot;Forest Land&quot;,
+                          landcover == &quot;Mixed Forest Land&quot; ~ &quot;Forest Land&quot;,
+                          landcover == &quot;Streams and Canals&quot; ~ &quot;Water&quot;,
+                          landcover == &quot;Lakes&quot; ~ &quot;Water&quot;,
+                          landcover == &quot;Reservoirs&quot; ~ &quot;Water&quot;,
+                          landcover == &quot;Bays and Estuaries&quot; ~ &quot;Water&quot;,
+                          landcover == &quot;Forested Wetland&quot; ~ &quot;Wetland&quot;,
+                          landcover == &quot;Nonforested Wetland&quot; ~ &quot;Wetland&quot;,
+                          landcover == &quot;Dry Salt Flats&quot; ~ &quot;Barren Land&quot;,
+                          landcover == &quot;Beaches&quot; ~ &quot;Barren Land&quot;,
+                          landcover == &quot;Sandy Areas Other than Beaches&quot; ~ &quot;Barren Land&quot;,
+                          landcover == &quot;Bare Exposed Rock&quot; ~ &quot;Barren Land&quot;,
+                          landcover == &quot;Strip Mines, Quarries, and Gravel Pits&quot; ~ &quot;Barren Land&quot;,
+                          landcover == &quot;Transitional Areas&quot; ~ &quot;Barren Land&quot;,
+                          landcover == &quot;Mixed Barren Land&quot; ~ &quot;Barren Land&quot;)) %&gt;%
+  drop_na(land_simple)
+
+land_simple &lt;- st_as_sf(land_simple)
+
+hi_land &lt;- ggplot() +
+    geom_sf(data = land_simple,
+          fill = NA,
+          color = &quot;black&quot;,
+          size = 1,
+          alpha = 0.5) +
+  geom_sf(data = land_simple,
+          aes(fill = land_simple),
+          color = NA) +
+  scale_fill_manual(values = c(&quot;green&quot;, &quot;grey40&quot;, &quot;dark green&quot;,  &quot;gold&quot;, &quot;red&quot;, &quot;cyan&quot;, &quot;blue&quot;)) +
+  theme_minimal()
+
+hi_land +
+  labs(caption = &quot;Hawaii Land Use.\nData: State of Hawaii, 2017\nKeene Morrow&quot;,
+       fill = &quot;Land Use&quot;) +
+  theme(plot.caption = element_text(hjust = 0, face = &quot;italic&quot;),
+        legend.position=&quot;bottom&quot;)
+
+ggsave(&quot;hawaii_land.png&quot;, width = 7, height = 5)</code></pre>
+<p><img src="figures/hawaii_land.png" /></p>
 </div>
-<div id="principal-components-analysis-of-vegetables" class="section level4">
-<h4>Principal Components Analysis of Vegetables</h4>
-<pre class="r"><code>food &lt;- read_csv(here::here(&quot;data&quot;, &quot;usda_nutrients.csv&quot;)) %&gt;% # read in nutrient data
-  clean_names() # format variable names
+<div id="watersheds" class="section level4">
+<h4>Watersheds</h4>
+<pre class="r"><code>water &lt;- read_sf(dsn = here::here(&quot;data&quot;),
+                 layer = &quot;watersheds&quot;)
 
-# create subset of just raw vegetables, no juices
-veg_sub&lt;- food %&gt;%
-  filter(food_group == &quot;Vegetables and Vegetable Products&quot;) %&gt;%
-  filter(str_detect(descrip, pattern = &quot;raw&quot;),
-         str_detect(descrip, pattern = &quot;juice&quot;, negate = TRUE)) %&gt;% 
-  select(8:30) # remove non-numeric (1:7) and recommended dietary allowance variables (31:45, duplicate 13:30)
+hi_water &lt;- ggplot(data = water) +
+  geom_sf(fill = NA,
+          color = &quot;black&quot;) +
+  geom_sf(aes(fill = area_sqmi),
+          color = NA) +
+  theme_minimal()
 
-# Principal Component Analysis of Vegetable Nutrients
-veg_pca &lt;- prcomp(veg_sub, scale = TRUE)
-
-# PCA Summary
-summary(veg_pca)</code></pre>
-<pre><code>## Importance of components:
-##                           PC1    PC2     PC3     PC4     PC5    PC6     PC7
-## Standard deviation     2.4337 1.6370 1.49852 1.33295 1.19472 1.0670 1.04249
-## Proportion of Variance 0.2575 0.1165 0.09763 0.07725 0.06206 0.0495 0.04725
-## Cumulative Proportion  0.2575 0.3740 0.47165 0.54890 0.61096 0.6605 0.70772
-##                            PC8     PC9   PC10   PC11    PC12    PC13    PC14
-## Standard deviation     0.92806 0.90630 0.8334 0.8053 0.78424 0.73597 0.68947
-## Proportion of Variance 0.03745 0.03571 0.0302 0.0282 0.02674 0.02355 0.02067
-## Cumulative Proportion  0.74516 0.78088 0.8111 0.8393 0.86601 0.88956 0.91023
-##                           PC15    PC16    PC17    PC18    PC19    PC20    PC21
-## Standard deviation     0.66394 0.63829 0.54033 0.48548 0.46292 0.42699 0.39664
-## Proportion of Variance 0.01917 0.01771 0.01269 0.01025 0.00932 0.00793 0.00684
-## Cumulative Proportion  0.92940 0.94711 0.95980 0.97005 0.97937 0.98730 0.99414
-##                           PC22    PC23
-## Standard deviation     0.36236 0.05990
-## Proportion of Variance 0.00571 0.00016
-## Cumulative Proportion  0.99984 1.00000</code></pre>
-<pre class="r"><code># Vegetable PCA Visualization
-veg_biplot &lt;- autoplot(veg_pca,
-                      colour = NA,
-                      loadings.label = TRUE,
-                      loadings.label.size = 3,
-                      loadings.label.colour = &quot;black&quot;,
-                      loadings.label.repel = TRUE) +
-  scale_y_continuous(limits = c(-0.4, 0.5)) +
-  scale_x_continuous(limits = c(-0.05, 0.4)) +
-  theme_minimal() +
-    labs(title = &quot;Vegetables&quot;,
-       caption = &quot;Figure 1.\nBiplot of principal component analysis of nutrients in whole, raw vegetables. Parenthetical values on axes indicate the\npercent of variance captured by that principal component.\nData: USDA&quot;) +
+hi_water +
+  labs(caption = &quot;Area of Hawaiian Watersheds. Of Hawaii&#39;s 558 watersheds, Keawanui is the largest at sq. mi.\nData: State of Hawaii, 2017\nKeene Morrow&quot;,
+       fill = &quot;Area (sq. mi.)&quot;) +
   theme(plot.caption = element_text(hjust = 0, face = &quot;italic&quot;))
 
-# Display visualization
-veg_biplot</code></pre>
-<p><img src="/project/nutrient-analysis/index_files/figure-html/unnamed-chunk-1-1.png" width="672" />
-The first and second principal components account for a total of <code>r</code>% of variance in the nutrient content of vegetables analyzed.</p>
-<ul>
-<li><em>Vitamin A</em>, <em>vitamin C</em> and <em>vitamin E</em> content are negatively correlated to <em>vitamin B12</em> and <em>selenium</em> content.</li>
-<li><em>Vitamin A</em> content may be negatively correlated to <em>sugar</em> content.</li>
-<li><em>Vitamin A</em> content is not correlated to <em>niacin</em> content.</li>
-<li><em>Vitamin B12</em>, <em>vitamin C</em>, <em>vitamin E</em>, and <em>selenium</em> content are not correlated to seventeen other variables considered.</li>
-<li>Those seventeen other variables are not negatively correlated to each other and some, such as <em>copper</em>, <em>phosphorus</em>, and <em>kilocalorie</em> content are highly correlated.</li>
-</ul>
+ggsave(&quot;hawaii_water.png&quot;, width = 7, height = 5)</code></pre>
+<p><img src="figures/hawaii_water.png" /></p>
 </div>
-<div id="principal-components-analysis-of-fruits" class="section level4">
-<h4>Principal Components Analysis of Fruits</h4>
-<pre class="r"><code># create subset of just raw fruits, no juices
-fruit_sub&lt;- food %&gt;%
-  filter(food_group == &quot;Fruits and Fruit Juices&quot;) %&gt;%
-  filter(str_detect(descrip, pattern = &quot;raw&quot;),
-         str_detect(descrip, pattern = &quot;juice&quot;, negate = TRUE)) %&gt;% 
-  select(8:30) %&gt;%
-  select(- vit_b12_mcg)
+<div id="focus-on-the-big-island" class="section level4">
+<h4>Focus on the Big Island</h4>
+<pre class="r"><code>big_water &lt;- hi_water +
+  coord_sf(xlim = c(-156.25, -154.75), ylim = c(18.75, 20.35), expand = FALSE) +
+  labs(title = &quot;Watersheds&quot;,
+       fill = &quot;Area (sq. mi.)&quot;) +
+  theme(axis.text.x = element_blank(),
+        legend.position = c(1.75, 0.5))
 
-# Principal Component Analysis of Fruit Nutrients
-fruit_pca &lt;- prcomp(fruit_sub, scale = TRUE)
+big_land &lt;- hi_land +
+  coord_sf(xlim = c(-156.25, -154.75), ylim = c(18.75, 20.35), expand = FALSE) +
+  labs(title = &quot;Land Use&quot;,
+    fill = &quot;&quot;) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = c(2.01, 0.5))
 
-# PCA Summary
-summary(fruit_pca)</code></pre>
-<pre><code>## Importance of components:
-##                           PC1    PC2     PC3     PC4     PC5     PC6    PC7
-## Standard deviation     2.5178 1.6490 1.31492 1.26970 1.15165 1.05769 1.0456
-## Proportion of Variance 0.2881 0.1236 0.07859 0.07328 0.06029 0.05085 0.0497
-## Cumulative Proportion  0.2881 0.4117 0.49033 0.56361 0.62390 0.67475 0.7244
-##                            PC8     PC9    PC10    PC11    PC12    PC13    PC14
-## Standard deviation     0.96091 0.88710 0.81296 0.77827 0.77042 0.72526 0.65188
-## Proportion of Variance 0.04197 0.03577 0.03004 0.02753 0.02698 0.02391 0.01932
-## Cumulative Proportion  0.76641 0.80219 0.83223 0.85976 0.88674 0.91065 0.92996
-##                           PC15   PC16    PC17   PC18    PC19   PC20    PC21
-## Standard deviation     0.60865 0.5914 0.51553 0.4300 0.37727 0.3478 0.32213
-## Proportion of Variance 0.01684 0.0159 0.01208 0.0084 0.00647 0.0055 0.00472
-## Cumulative Proportion  0.94680 0.9627 0.97478 0.9832 0.98965 0.9951 0.99987
-##                           PC22
-## Standard deviation     0.05380
-## Proportion of Variance 0.00013
-## Cumulative Proportion  1.00000</code></pre>
-<pre class="r"><code># Fruit PCA Visualization
-fruit_biplot &lt;- autoplot(fruit_pca,
-                      colour = NA,
-                      loadings.label = TRUE,
-                      loadings.label.size = 3,
-                      loadings.label.colour = &quot;black&quot;,
-                      loadings.label.repel = TRUE) +
-  scale_y_continuous(limits = c(-0.4, 0.5)) +
-  scale_x_continuous(limits = c(-0.05, 0.4)) +
-  theme_minimal() +
-  labs(title = &quot;Fruits&quot;,
-       caption = &quot;Figure 2.\nBiplot of principal component analysis of nutrients in whole, raw fruit. Parenthetical values on axes indicate the\npercent of variance captured by that principal component.\nData: USDA&quot;) +
-  theme(plot.caption = element_text(hjust = 0, face = &quot;italic&quot;))
-
-# Display visualization
-fruit_biplot</code></pre>
-<p><img src="/project/nutrient-analysis/index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+big_water / big_land +
+  labs(caption = &quot;Big Island, Hawaii\nData: State of Hawaii, 2017\nKeene Morrow&quot;) +
+  theme(plot.caption = element_text(hjust = 0, face = &quot;italic&quot;),
+        plot.margin = grid::unit(c(0,0,0,0), &quot;mm&quot;))</code></pre>
+<p><img src="figures/hawaii.png" />
+***</p>
+<p><strong>Citations</strong></p>
+<hr />
 <ul>
-<li><em>Phosphorus</em> and <em>kilocalorie</em> content are highlight positively correlated in fruits, as in vegetables.</li>
-<li>Unlike in vegetables, <em>copper</em> content is less correlated to <em>phophorus</em> and <em>kilocalorie</em> content in fruits, though there is still a positive correlation.</li>
-<li><em>Vitamin C</em> and <em>sugar</em> content may be negatively correlated.</li>
-<li><em>Zinc</em>, <em>folate</em>, <em>fat</em>, and <em>vitamin E</em> content are not correlated to <em>sugar</em>, <em>calcium</em>, <em>iron</em>, and <em>carbohydrate</em> concent.</li>
-<li>Compared to vegetables, there is less overall correlation between nutrient content in fruits.</li>
+<li>Land Use Land Cover of Main Hawaiian Islands. Source: 1:100,000 1976 Digital GIRAS (Geographic Information Retrieval and Analysis). 2017. Hawaii Statewide GIS Program. <a href="http://geoportal.hawaii.gov/datasets/land-use-land-cover-lulc" class="uri">http://geoportal.hawaii.gov/datasets/land-use-land-cover-lulc</a></li>
+<li>NASA. Image courtesy Jacques Descloitres, MODIS Land Rapid Response Team at NASA GSFC. (IotD Date: 2003-06-03. IotD ID: 15304)</li>
+<li>Surface Water Hyrdrologic Unit Boundaries (Watersheds) for the 8 major Hawaiian Islands.Source: GDSI, 1995, 1999; State of Hawaii Commission on Water Resource Management (CWRM), 2008. Provided to State GIS, August, 2017. Hawaii Statewide GIS Program. <a href="http://geoportal.hawaii.gov/datasets/watersheds" class="uri">http://geoportal.hawaii.gov/datasets/watersheds</a></li>
 </ul>
-</div>
-<div id="references" class="section level4">
-<h4>References</h4>
-<p>American Optometric Association. 2020. Can fruits, vegetables lower cataract risk? <a href="https://www.aoa.org/news/clinical-eye-care/fruits-vegetables-cataracts" class="uri">https://www.aoa.org/news/clinical-eye-care/fruits-vegetables-cataracts</a></p>
-<p>Horst, A. 2020. Lecture 2: PCA continued, RDA intro. ESM 244, Bren School of Environmental Science and Management, University of California, Santa Barbara. <a href="https://allisonhorst.github.io/" class="uri">https://allisonhorst.github.io/</a></p>
-<p>U.S. Department of Agriculture, Agricultural Research Service. 2019. National Nutrient Database. <a href="https://fdc.nal.usda.gov/" class="uri">https://fdc.nal.usda.gov/</a></p>
 </div>
 
     </div>
@@ -812,7 +794,7 @@ fruit_biplot</code></pre>
   
   <a class="badge badge-light" href="/tags/r-markdown/">R Markdown</a>
   
-  <a class="badge badge-light" href="/tags/pca/">PCA</a>
+  <a class="badge badge-light" href="/tags/gis/">GIS</a>
   
 </div>
 
@@ -829,7 +811,7 @@ fruit_biplot</code></pre>
       
       
       <li>
-        <a href="https://twitter.com/intent/tweet?url=/project/nutrient-analysis/&amp;text=Fruits%20&amp;amp;%20Vegetables" target="_blank" rel="noopener" class="share-btn-twitter">
+        <a href="https://twitter.com/intent/tweet?url=/project/hawaii/&amp;text=Hawaii" target="_blank" rel="noopener" class="share-btn-twitter">
           <i class="fab fa-twitter"></i>
         </a>
       </li>
@@ -842,7 +824,7 @@ fruit_biplot</code></pre>
       
       
       <li>
-        <a href="https://www.facebook.com/sharer.php?u=/project/nutrient-analysis/&amp;t=Fruits%20&amp;amp;%20Vegetables" target="_blank" rel="noopener" class="share-btn-facebook">
+        <a href="https://www.facebook.com/sharer.php?u=/project/hawaii/&amp;t=Hawaii" target="_blank" rel="noopener" class="share-btn-facebook">
           <i class="fab fa-facebook"></i>
         </a>
       </li>
@@ -855,7 +837,7 @@ fruit_biplot</code></pre>
       
       
       <li>
-        <a href="mailto:?subject=Fruits%20&amp;amp;%20Vegetables&amp;body=/project/nutrient-analysis/" target="_blank" rel="noopener" class="share-btn-email">
+        <a href="mailto:?subject=Hawaii&amp;body=/project/hawaii/" target="_blank" rel="noopener" class="share-btn-email">
           <i class="fas fa-envelope"></i>
         </a>
       </li>
@@ -868,7 +850,7 @@ fruit_biplot</code></pre>
       
       
       <li>
-        <a href="https://www.linkedin.com/shareArticle?url=/project/nutrient-analysis/&amp;title=Fruits%20&amp;amp;%20Vegetables" target="_blank" rel="noopener" class="share-btn-linkedin">
+        <a href="https://www.linkedin.com/shareArticle?url=/project/hawaii/&amp;title=Hawaii" target="_blank" rel="noopener" class="share-btn-linkedin">
           <i class="fab fa-linkedin-in"></i>
         </a>
       </li>
@@ -881,7 +863,7 @@ fruit_biplot</code></pre>
       
       
       <li>
-        <a href="https://web.whatsapp.com/send?text=Fruits%20&amp;amp;%20Vegetables%20/project/nutrient-analysis/" target="_blank" rel="noopener" class="share-btn-whatsapp">
+        <a href="https://web.whatsapp.com/send?text=Hawaii%20/project/hawaii/" target="_blank" rel="noopener" class="share-btn-whatsapp">
           <i class="fab fa-whatsapp"></i>
         </a>
       </li>
@@ -894,7 +876,7 @@ fruit_biplot</code></pre>
       
       
       <li>
-        <a href="https://service.weibo.com/share/share.php?url=/project/nutrient-analysis/&amp;title=Fruits%20&amp;amp;%20Vegetables" target="_blank" rel="noopener" class="share-btn-weibo">
+        <a href="https://service.weibo.com/share/share.php?url=/project/hawaii/&amp;title=Hawaii" target="_blank" rel="noopener" class="share-btn-weibo">
           <i class="fab fa-weibo"></i>
         </a>
       </li>
@@ -1010,7 +992,7 @@ fruit_biplot</code></pre>
       
       <li><a href="/project/australia-fires/">Australia&#39;s Climate</a></li>
       
-      <li><a href="/project/hawaii/">Hawaii</a></li>
+      <li><a href="/project/nutrient-analysis/">Fruits &amp; Vegetables</a></li>
       
       <li><a href="/project/hare-analysis/">Snowshoe Hares</a></li>
       

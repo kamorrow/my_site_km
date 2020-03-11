@@ -344,10 +344,132 @@ fruit_biplot&lt;/code&gt;&lt;/pre&gt;
     </item>
     
     <item>
-      <title>Snowshoe Hares</title>
-      <link>/project/hareanalysis/</link>
+      <title>Hawaii</title>
+      <link>/project/hawaii/</link>
       <pubDate>Sat, 01 Feb 2020 15:53:48 -0800</pubDate>
-      <guid>/project/hareanalysis/</guid>
+      <guid>/project/hawaii/</guid>
+      <description>
+
+
+&lt;div id=&#34;land-use-land-cover&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Land Use &amp;amp; Land Cover&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;land &amp;lt;- read_sf(dsn = here::here(&amp;quot;data&amp;quot;),
+                layer = &amp;quot;landuse&amp;quot;)
+
+land_simple &amp;lt;- land %&amp;gt;% 
+  mutate(land_simple = case_when(landcover == &amp;quot;Residential&amp;quot; ~ &amp;quot;Urban or Built-up land&amp;quot;,
+                          landcover == &amp;quot;Commercial and Services&amp;quot; ~ &amp;quot;Urban or Built-up land&amp;quot;,
+                          landcover == &amp;quot;Industrial&amp;quot; ~ &amp;quot;Urban or Built-up land&amp;quot;,
+                          landcover == &amp;quot;Transportation, Communications and Utilities&amp;quot; ~ &amp;quot;Urban or Built-up land&amp;quot;,
+                          landcover == &amp;quot;Industrial and Commercial Complexes&amp;quot; ~ &amp;quot;Urban or Built-up land&amp;quot;,
+                          landcover == &amp;quot;Mixed Urban or Built-up Land&amp;quot; ~ &amp;quot;Urban or Built-up land&amp;quot;,
+                          landcover == &amp;quot;Other Urban or Built-up Land&amp;quot; ~ &amp;quot;Urban or Built-up land&amp;quot;,
+                          landcover == &amp;quot;Cropland and Pasture&amp;quot; ~ &amp;quot;Agricultural Land&amp;quot;,
+                          landcover == &amp;quot;Orchards, Groves, Vineyards, Nurseries and Ornamental Horticultural Areas&amp;quot; ~ &amp;quot;Agricultural Land&amp;quot;,
+                          landcover == &amp;quot;Confined Feeding Operations&amp;quot; ~ &amp;quot;Agricultural Land&amp;quot;,
+                          landcover == &amp;quot;Other Agricultural Land&amp;quot; ~ &amp;quot;Agricultural Land&amp;quot;,
+                          landcover == &amp;quot;Herbaceous Rangeland&amp;quot; ~ &amp;quot;Rangeland&amp;quot;,
+                          landcover == &amp;quot;Shrub and Brush Rangeland&amp;quot; ~ &amp;quot;Rangeland&amp;quot;,
+                          landcover == &amp;quot;Mixed Rangeland&amp;quot; ~ &amp;quot;Rangeland&amp;quot;,
+                          landcover == &amp;quot;Deciduous Forest Land&amp;quot; ~ &amp;quot;Forest Land&amp;quot;,
+                          landcover == &amp;quot;Evergreen Forest Land&amp;quot; ~ &amp;quot;Forest Land&amp;quot;,
+                          landcover == &amp;quot;Mixed Forest Land&amp;quot; ~ &amp;quot;Forest Land&amp;quot;,
+                          landcover == &amp;quot;Streams and Canals&amp;quot; ~ &amp;quot;Water&amp;quot;,
+                          landcover == &amp;quot;Lakes&amp;quot; ~ &amp;quot;Water&amp;quot;,
+                          landcover == &amp;quot;Reservoirs&amp;quot; ~ &amp;quot;Water&amp;quot;,
+                          landcover == &amp;quot;Bays and Estuaries&amp;quot; ~ &amp;quot;Water&amp;quot;,
+                          landcover == &amp;quot;Forested Wetland&amp;quot; ~ &amp;quot;Wetland&amp;quot;,
+                          landcover == &amp;quot;Nonforested Wetland&amp;quot; ~ &amp;quot;Wetland&amp;quot;,
+                          landcover == &amp;quot;Dry Salt Flats&amp;quot; ~ &amp;quot;Barren Land&amp;quot;,
+                          landcover == &amp;quot;Beaches&amp;quot; ~ &amp;quot;Barren Land&amp;quot;,
+                          landcover == &amp;quot;Sandy Areas Other than Beaches&amp;quot; ~ &amp;quot;Barren Land&amp;quot;,
+                          landcover == &amp;quot;Bare Exposed Rock&amp;quot; ~ &amp;quot;Barren Land&amp;quot;,
+                          landcover == &amp;quot;Strip Mines, Quarries, and Gravel Pits&amp;quot; ~ &amp;quot;Barren Land&amp;quot;,
+                          landcover == &amp;quot;Transitional Areas&amp;quot; ~ &amp;quot;Barren Land&amp;quot;,
+                          landcover == &amp;quot;Mixed Barren Land&amp;quot; ~ &amp;quot;Barren Land&amp;quot;)) %&amp;gt;%
+  drop_na(land_simple)
+
+land_simple &amp;lt;- st_as_sf(land_simple)
+
+hi_land &amp;lt;- ggplot() +
+    geom_sf(data = land_simple,
+          fill = NA,
+          color = &amp;quot;black&amp;quot;,
+          size = 1,
+          alpha = 0.5) +
+  geom_sf(data = land_simple,
+          aes(fill = land_simple),
+          color = NA) +
+  scale_fill_manual(values = c(&amp;quot;green&amp;quot;, &amp;quot;grey40&amp;quot;, &amp;quot;dark green&amp;quot;,  &amp;quot;gold&amp;quot;, &amp;quot;red&amp;quot;, &amp;quot;cyan&amp;quot;, &amp;quot;blue&amp;quot;)) +
+  theme_minimal()
+
+hi_land +
+  labs(caption = &amp;quot;Hawaii Land Use.\nData: State of Hawaii, 2017\nKeene Morrow&amp;quot;,
+       fill = &amp;quot;Land Use&amp;quot;) +
+  theme(plot.caption = element_text(hjust = 0, face = &amp;quot;italic&amp;quot;),
+        legend.position=&amp;quot;bottom&amp;quot;)
+
+ggsave(&amp;quot;hawaii_land.png&amp;quot;, width = 7, height = 5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;figures/hawaii_land.png&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;watersheds&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Watersheds&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;water &amp;lt;- read_sf(dsn = here::here(&amp;quot;data&amp;quot;),
+                 layer = &amp;quot;watersheds&amp;quot;)
+
+hi_water &amp;lt;- ggplot(data = water) +
+  geom_sf(fill = NA,
+          color = &amp;quot;black&amp;quot;) +
+  geom_sf(aes(fill = area_sqmi),
+          color = NA) +
+  theme_minimal()
+
+hi_water +
+  labs(caption = &amp;quot;Area of Hawaiian Watersheds. Of Hawaii&amp;#39;s 558 watersheds, Keawanui is the largest at sq. mi.\nData: State of Hawaii, 2017\nKeene Morrow&amp;quot;,
+       fill = &amp;quot;Area (sq. mi.)&amp;quot;) +
+  theme(plot.caption = element_text(hjust = 0, face = &amp;quot;italic&amp;quot;))
+
+ggsave(&amp;quot;hawaii_water.png&amp;quot;, width = 7, height = 5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;figures/hawaii_water.png&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;focus-on-the-big-island&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Focus on the Big Island&lt;/h4&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;big_water &amp;lt;- hi_water +
+  coord_sf(xlim = c(-156.25, -154.75), ylim = c(18.75, 20.35), expand = FALSE) +
+  labs(title = &amp;quot;Watersheds&amp;quot;,
+       fill = &amp;quot;Area (sq. mi.)&amp;quot;) +
+  theme(axis.text.x = element_blank(),
+        legend.position = c(1.75, 0.5))
+
+big_land &amp;lt;- hi_land +
+  coord_sf(xlim = c(-156.25, -154.75), ylim = c(18.75, 20.35), expand = FALSE) +
+  labs(title = &amp;quot;Land Use&amp;quot;,
+    fill = &amp;quot;&amp;quot;) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = c(2.01, 0.5))
+
+big_water / big_land +
+  labs(caption = &amp;quot;Big Island, Hawaii\nData: State of Hawaii, 2017\nKeene Morrow&amp;quot;) +
+  theme(plot.caption = element_text(hjust = 0, face = &amp;quot;italic&amp;quot;),
+        plot.margin = grid::unit(c(0,0,0,0), &amp;quot;mm&amp;quot;))&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;figures/hawaii.png&#34; /&gt;
+***&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Citations&lt;/strong&gt;&lt;/p&gt;
+&lt;hr /&gt;
+&lt;ul&gt;
+&lt;li&gt;Land Use Land Cover of Main Hawaiian Islands. Source: 1:100,000 1976 Digital GIRAS (Geographic Information Retrieval and Analysis). 2017. Hawaii Statewide GIS Program. &lt;a href=&#34;http://geoportal.hawaii.gov/datasets/land-use-land-cover-lulc&#34; class=&#34;uri&#34;&gt;http://geoportal.hawaii.gov/datasets/land-use-land-cover-lulc&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;NASA. Image courtesy Jacques Descloitres, MODIS Land Rapid Response Team at NASA GSFC. (IotD Date: 2003-06-03. IotD ID: 15304)&lt;/li&gt;
+&lt;li&gt;Surface Water Hyrdrologic Unit Boundaries (Watersheds) for the 8 major Hawaiian Islands.Source: GDSI, 1995, 1999; State of Hawaii Commission on Water Resource Management (CWRM), 2008. Provided to State GIS, August, 2017. Hawaii Statewide GIS Program. &lt;a href=&#34;http://geoportal.hawaii.gov/datasets/watersheds&#34; class=&#34;uri&#34;&gt;http://geoportal.hawaii.gov/datasets/watersheds&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Snowshoe Hares</title>
+      <link>/project/hare-analysis/</link>
+      <pubDate>Sat, 01 Feb 2020 15:53:48 -0800</pubDate>
+      <guid>/project/hare-analysis/</guid>
       <description>
 &lt;script src=&#34;/rmarkdown-libs/kePrint/kePrint.js&#34;&gt;&lt;/script&gt;
 
@@ -607,7 +729,8 @@ adults_summary_all &amp;lt;- adults_all %&amp;gt;%
 adults_summary &amp;lt;- merge(adults_summary_sex, adults_summary_all)
 
 # Display mean weight data frame as table
-kable(adults_count) %&amp;gt;% 
+kable(adults_count,
+      background = &amp;quot;White&amp;quot;) %&amp;gt;% 
   kable_styling(bootstrap_options = &amp;quot;hover&amp;quot;, 
                 full_width = F,
                 position = &amp;quot;center&amp;quot;

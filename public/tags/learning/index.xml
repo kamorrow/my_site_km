@@ -14,9 +14,9 @@
     
     <item>
       <title>Snowshoe Hares</title>
-      <link>/project/hareanalysis/</link>
+      <link>/project/hare-analysis/</link>
       <pubDate>Sat, 01 Feb 2020 15:53:48 -0800</pubDate>
-      <guid>/project/hareanalysis/</guid>
+      <guid>/project/hare-analysis/</guid>
       <description>
 &lt;script src=&#34;/rmarkdown-libs/kePrint/kePrint.js&#34;&gt;&lt;/script&gt;
 
@@ -276,7 +276,8 @@ adults_summary_all &amp;lt;- adults_all %&amp;gt;%
 adults_summary &amp;lt;- merge(adults_summary_sex, adults_summary_all)
 
 # Display mean weight data frame as table
-kable(adults_count) %&amp;gt;% 
+kable(adults_count,
+      background = &amp;quot;White&amp;quot;) %&amp;gt;% 
   kable_styling(bootstrap_options = &amp;quot;hover&amp;quot;, 
                 full_width = F,
                 position = &amp;quot;center&amp;quot;

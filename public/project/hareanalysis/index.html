@@ -924,7 +924,8 @@ adults_summary_all &lt;- adults_all %&gt;%
 adults_summary &lt;- merge(adults_summary_sex, adults_summary_all)
 
 # Display mean weight data frame as table
-kable(adults_count) %&gt;% 
+kable(adults_count,
+      background = &quot;White&quot;) %&gt;% 
   kable_styling(bootstrap_options = &quot;hover&quot;, 
                 full_width = F,
                 position = &quot;center&quot;

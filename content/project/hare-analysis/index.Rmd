@@ -2,7 +2,7 @@
 title: "Snowshoe Hares"
 author: "Keene Morrow"
 date: "February 6th, 2020"
-slug: hare=analysis
+slug: hare-analysis
 categories:
   - R
 tags:
@@ -158,7 +158,8 @@ adults_summary_all <- adults_all %>%
 adults_summary <- merge(adults_summary_sex, adults_summary_all)
 
 # Display mean weight data frame as table
-kable(adults_count) %>% 
+kable(adults_count,
+      background = "White") %>% 
   kable_styling(bootstrap_options = "hover", 
                 full_width = F,
                 position = "center"

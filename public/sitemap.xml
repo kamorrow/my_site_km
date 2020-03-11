@@ -78,12 +78,22 @@
   </url>
   
   <url>
+    <loc>/tags/gis/</loc>
+    <lastmod>2020-02-01T15:53:48-08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/project/hawaii/</loc>
+    <lastmod>2020-02-01T15:53:48-08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/tags/learning/</loc>
     <lastmod>2020-02-01T15:53:48-08:00</lastmod>
   </url>
   
   <url>
-    <loc>/project/hareanalysis/</loc>
+    <loc>/project/hare-analysis/</loc>
     <lastmod>2020-02-01T15:53:48-08:00</lastmod>
   </url>
   
